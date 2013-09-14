@@ -34,14 +34,14 @@ private $deadtry;
 					   `{$bd_users['email']}`,
 					   `{$bd_users['deadtry']}`,
 					   `{$bd_users['female']}`,
-					   `{$bd_users['group']}` FROM `{$this->db}` WHERE `".TextBase::SQLSafe($method)."`='".TextBase::SQLSafe($input)."'";
+					   `{$bd_users['group']}` FROM `{$this->db}` WHERE `".mcrDB::safe($method)."`='".mcrDB::safe($input)."'";
 						   
 		$result = BD($sql);			
-		if ( !$result or mysql_num_rows( $result ) != 1 ) { $this->id = false; return false; }		
+		if ( !$result or $result->num_rows != 1 ) { $this->id = false; return false; }		
 		
 		$this->permissions = null;	
 					 
-		$line = mysql_fetch_array($result, MYSQL_ASSOC);
+		$line = $result->fetch_array( MYSQL_ASSOC);
 			
 		$this->id     = (int)$line[$bd_users['id']];			
 		$this->name   = $line[$bd_users['login']];
@@ -75,7 +75,7 @@ private $deadtry;
 		if (!$this->id) return false;
 
 		$result = BD("SELECT `{$bd_users['password']}` FROM `{$this->db}` WHERE `{$bd_users['id']}`='".$this->id."'"); 
-		$line = mysql_fetch_array( $result, MYSQL_NUM);
+		$line = $result->fetch_array( MYSQL_NUM);
 		
 		$auth_info = array( 'pass_db' => $line[0], 'pass' => $pass, 'user_id' => $this->id, 'user_name' => $this->name );
 		$test_pass = MCRAuth::checkPass($auth_info);
@@ -99,7 +99,7 @@ private $deadtry;
 		if ($config['p_logic'] != 'usual' and $config['p_sync'])
 			MCMSAuth::login($this->id());	
 			
-		BD("UPDATE `{$this->db}` SET `{$bd_users['deadtry']}` = '0', `{$bd_users['tmp']}`='".TextBase::SQLSafe($tmp)."', `{$bd_users['ip']}`='".TextBase::SQLSafe($ip)."' WHERE `{$bd_users['id']}`='".$this->id."'");
+		BD("UPDATE `{$this->db}` SET `{$bd_users['deadtry']}` = '0', `{$bd_users['tmp']}`='".mcrDB::safe($tmp)."', `{$bd_users['ip']}`='".mcrDB::safe($ip)."' WHERE `{$bd_users['id']}`='".$this->id."'");
 	
 		$this->tmp = $tmp;
 		
@@ -125,7 +125,7 @@ private $deadtry;
 				  
 		if (isset($_COOKIE['PRTCookie1'])) { 
 				  
-			BD("UPDATE `{$this->db}` SET `{$bd_users['tmp']}`='0' WHERE `{$bd_users['tmp']}`='".TextBase::SQLSafe($_COOKIE['PRTCookie1'])."'");					  
+			BD("UPDATE `{$this->db}` SET `{$bd_users['tmp']}`='0' WHERE `{$bd_users['tmp']}`='".mcrDB::safe($_COOKIE['PRTCookie1'])."'");					  
 			setcookie("PRTCookie1","",time()-3600);					
 			$this->tmp = 0;		  
 		}	
@@ -141,7 +141,7 @@ private $deadtry;
 	/* Интервал по времени 1 минута */
 	
 		$result = BD("SELECT id FROM `{$bd_names['comments']}` WHERE user_id='".$this->id."' AND time>NOW()-INTERVAL 1 MINUTE");
-		if ( mysql_num_rows( $result ) ) return false;	
+		if ( $result->num_rows ) return false;	
 		
 		return true;
 	
@@ -164,7 +164,7 @@ private $deadtry;
 	
 		$result = BD("SELECT `{$bd_users['id']}` FROM `{$this->db}` WHERE `{$bd_users['server']}` IS NOT NULL and `{$bd_users['id']}`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1)
+		if ($result->num_rows == 1)
 				BD("UPDATE `{$this->db}` SET `{$bd_users['server']}`=NULL WHERE `{$bd_users['id']}`='".$this->id."'"); 
 		
 		return true;
@@ -177,9 +177,9 @@ private $deadtry;
 	
 		$result = BD("SELECT `gameplay_last` FROM `{$this->db}` WHERE `gameplay_last` <> '0000-00-00 00:00:00' and `{$bd_users['id']}`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1) {
+		if ($result->num_rows == 1) {
 		
-			$line = mysql_fetch_array($result);
+			$line = $result->fetch_array();
 			
 			return $line['gameplay_last'];
 			
@@ -192,7 +192,7 @@ private $deadtry;
 	
 		if (!$this->id) return false;	
 		
-		$param = TextBase::SQLSafe($param);
+		$param = mcrDB::safe($param);
 		
 		switch ($param) {
 		case 'create_time': $param = $bd_users['ctime']; break;
@@ -203,9 +203,9 @@ private $deadtry;
 		
  		$result = BD("SELECT `$param` FROM `{$this->db}` WHERE `$param`<>'0000-00-00 00:00:00' and `{$bd_users['id']}`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1) {
+		if ($result->num_rows == 1) {
 		
-			$line = mysql_fetch_array($result);
+			$line = $result->fetch_array();
 
 			return $line[$param];
 			
@@ -220,9 +220,9 @@ private $deadtry;
 	
 		$result = BD("SELECT `comments_num`, `play_times`, `undress_times` FROM `{$this->db}` WHERE `{$bd_users['id']}`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1)
+		if ($result->num_rows == 1)
 				
-				return mysql_fetch_array($result);
+				return $result->fetch_array();
 				
 		else 	return false;		
 	}
@@ -234,14 +234,14 @@ private $deadtry;
 	
 		if ($bd_names['iconomy']) {
 		
-			$result  = BD("SELECT `{$bd_money['money']}` FROM `{$bd_names['iconomy']}` WHERE `{$bd_money['login']}`='".TextBase::SQLSafe($this->name())."'");
-			if (!mysql_num_rows( $result )) {
+			$result  = BD("SELECT `{$bd_money['money']}` FROM `{$bd_names['iconomy']}` WHERE `{$bd_money['login']}`='".mcrDB::safe($this->name())."'");
+			if (!$result->num_rows) {
 			
-			$result = BD("INSERT INTO `{$bd_names['iconomy']}` (`{$bd_money['login']}`,`{$bd_money['money']}`) values ('".TextBase::SQLSafe($this->name())."','0')");	
+			$result = BD("INSERT INTO `{$bd_names['iconomy']}` (`{$bd_money['login']}`,`{$bd_money['money']}`) values ('".mcrDB::safe($this->name())."','0')");	
 			return 0;			
 			}
 			
-			$line = mysql_fetch_array($result, MYSQL_NUM);
+			$line = $result->fetch_array( MYSQL_NUM);
 			
 		return floatval($line[0]);			
 		} 
@@ -261,7 +261,7 @@ private $deadtry;
 	$new_pl_money = $this->getMoney() + $num;		
 	if ($new_pl_money < 0 ) $new_pl_money = 0;
 		
-	BD("UPDATE `{$bd_names['iconomy']}` SET `{$bd_money['money']}`='".TextBase::SQLSafe($new_pl_money)."' WHERE `{$bd_money['login']}`='".TextBase::SQLSafe($this->name())."'");       
+	BD("UPDATE `{$bd_names['iconomy']}` SET `{$bd_money['money']}`='".mcrDB::safe($new_pl_money)."' WHERE `{$bd_money['login']}`='".mcrDB::safe($this->name())."'");       
     return $new_pl_money;
     }
 	
@@ -281,8 +281,8 @@ private $deadtry;
 	  
 	  $result = BD("SELECT `name` FROM `{$bd_names['groups']}` WHERE `id`='{$this->group}'");
 
-      if (!mysql_num_rows( $result )) return 'unnamed';
-	  $line   = mysql_fetch_array($result, MYSQL_NUM);
+      if (!$result->num_rows) return 'unnamed';
+	  $line   = $result->fetch_array( MYSQL_NUM);
 
 	  return $line[0];
     }
@@ -314,7 +314,7 @@ private $deadtry;
 
 			   $md5 = @file($default_skin_md5); 
 		  if ( $md5[0] ) return $md5[0];
-		  else { vtxtlog( '[action.php] error while READING md5 cache file. '.$default_skin_md5 ); return false; }		 
+		  else { mcrSys::log( '[action.php] error while READING md5 cache file. '.$default_skin_md5 ); return false; }		 
 		}
 
 		if ( $this->isFemale() ) $default_skin = $def_dir.'Char_female.png';
@@ -323,16 +323,16 @@ private $deadtry;
 		if ( file_exists($default_skin) ) {
 
 				$md5 = md5_file($default_skin);  
-		  if ( !$md5 ) { vtxtlog( '[action.php] md5 generate error. '.$default_skin ); return false; }
+		  if ( !$md5 ) { mcrSys::log( '[action.php] md5 generate error. '.$default_skin ); return false; }
 		  
 		  if ( $fp = fopen($default_skin_md5, 'w') ) {    
-			if ( !fwrite($fp, $md5) ) vtxtlog( '[action.php] error while SAVE cache file. '.$default_skin_md5 );
+			if ( !fwrite($fp, $md5) ) mcrSys::log( '[action.php] error while SAVE cache file. '.$default_skin_md5 );
 			fclose($fp);
-		  } else  vtxtlog( '[action.php] error while CREATE cache file. '.$default_skin_md5 );
+		  } else  mcrSys::log( '[action.php] error while CREATE cache file. '.$default_skin_md5 );
 		  
 		  return $md5;  
 		  
-		} else { vtxtlog( '[action.php] default skin file missing. '.$default_skin ); return false; }
+		} else { mcrSys::log( '[action.php] default skin file missing. '.$default_skin ); return false; }
 	 
 	}	
 	
@@ -344,7 +344,7 @@ private $deadtry;
 	  if ( $new_value < 0 ) {
 	  
 	    $result = BD("SELECT default_skin FROM `{$this->db}` WHERE `{$bd_users['id']}`='{$this->id()}'");
-	    $line   = mysql_fetch_array($result, MYSQL_NUM);
+	    $line   = $result->fetch_array( MYSQL_NUM);
 		
 		$trigger = (int)$line[0];
 		
@@ -384,7 +384,7 @@ private $deadtry;
     
 	$default_skin = MCRAFT.'tmp/default_skins/Char'.(($this->isFemale())? '_female':'').'.png';
 
-	if ( !copy ( $default_skin , $this->getSkinFName()) ) vtxtlog('[SetDefaultSkin] error while COPY default skin for new user.');
+	if ( !copy ( $default_skin , $this->getSkinFName()) ) mcrSys::log('[SetDefaultSkin] error while COPY default skin for new user.');
     else $this->defaultSkinTrigger(true);
 	
 	return 1;
@@ -399,13 +399,13 @@ private $deadtry;
 		
 		if (!preg_match("/^[a-zA-Z0-9_-]+$/", $newname)) return 1401;
 		
-		$result = BD("SELECT `{$bd_users['login']}` FROM `{$this->db}` WHERE `{$bd_users['login']}`='".TextBase::SQLSafe($newname)."'");
+		$result = BD("SELECT `{$bd_users['login']}` FROM `{$this->db}` WHERE `{$bd_users['login']}`='".mcrDB::safe($newname)."'");
 		
-		if (mysql_num_rows($result)) return 1402;
+		if ($result->num_rows) return 1402;
 		
 		if ((strlen($newname) < 4) or (strlen($newname) > 15)) return 1403;
 		
-		BD("UPDATE `{$this->db}` SET `{$bd_users['login']}`='".TextBase::SQLSafe($newname)."' WHERE `{$bd_users['login']}`='".TextBase::SQLSafe($this->name)."'");
+		BD("UPDATE `{$this->db}` SET `{$bd_users['login']}`='".mcrDB::safe($newname)."' WHERE `{$bd_users['login']}`='".mcrDB::safe($this->name)."'");
 		
 		if (!empty($_SESSION['user_name']) and $_SESSION['user_name'] == $this->name) $_SESSION['user_name'] = $newname;
 			
@@ -448,8 +448,8 @@ private $deadtry;
 			
 			if (!preg_match($regular, $pass) or !preg_match($regular, $newpass)) return 1501;
 			
-			$result = BD("SELECT `{$bd_users['password']}` FROM `{$this->db}` WHERE `{$bd_users['login']}`='".TextBase::SQLSafe($this->name)."'"); 
-			$line   = mysql_fetch_array( $result, MYSQL_NUM );
+			$result = BD("SELECT `{$bd_users['password']}` FROM `{$this->db}` WHERE `{$bd_users['login']}`='".mcrDB::safe($this->name)."'"); 
+			$line   = $result->fetch_array( MYSQL_NUM );
 			 
 			if ($line == NULL or !MCRAuth::checkPass(array('pass_db' => $line[0], 'pass' => $pass, 'user_id' => $this->id, 'user_name' => $this->name)) ) return 1502;
 		}
@@ -458,7 +458,7 @@ private $deadtry;
 		
 		if (($len < $minlen) or ($len > $maxlen)) return 1503;
 			 
-		BD("UPDATE `{$this->db}` SET `{$bd_users['password']}`='".MCRAuth::createPass($newpass)."' WHERE `{$bd_users['login']}`='".TextBase::SQLSafe($this->name)."'"); 
+		BD("UPDATE `{$this->db}` SET `{$bd_users['password']}`='".MCRAuth::createPass($newpass)."' WHERE `{$bd_users['login']}`='".mcrDB::safe($this->name)."'"); 
 		
 		return 1;
 	}
@@ -470,11 +470,11 @@ private $deadtry;
 		if ($newgroup < 0) return false;
 		if ($newgroup == $this->group) return false;
 		
-		$result = BD("SELECT `id` FROM `{$bd_names['groups']}` WHERE `id`='".TextBase::SQLSafe($newgroup)."'");
+		$result = BD("SELECT `id` FROM `{$bd_names['groups']}` WHERE `id`='".mcrDB::safe($newgroup)."'");
 		
-		if ( !mysql_num_rows( $result ) ) return false;
+		if ( !$result->num_rows ) return false;
 		
-		BD("UPDATE {$this->db} SET `{$bd_users['group']}`='".TextBase::SQLSafe($newgroup)."' WHERE `{$bd_users['id']}`='".$this->id."'"); 
+		BD("UPDATE {$this->db} SET `{$bd_users['group']}`='".mcrDB::safe($newgroup)."' WHERE `{$bd_users['id']}`='".$this->id."'"); 
 		
 		$this->group = $newgroup;
 		$this->permissions['lvl'] = null;
@@ -516,8 +516,8 @@ private $deadtry;
 			
 		} else { 	 
 	
-			$result = BD("SELECT `id` FROM {$this->db} WHERE `{$bd_users['email']}`='".TextBase::SQLSafe($email)."' AND `{$bd_users['id']}` != '".$this->id."' ");		
-			if ( mysql_num_rows( $result ) ) return 1902;	
+			$result = BD("SELECT `id` FROM {$this->db} WHERE `{$bd_users['email']}`='".mcrDB::safe($email)."' AND `{$bd_users['id']}` != '".$this->id."' ");		
+			if ( $result->num_rows ) return 1902;	
 		}
 		
 		if ($verification) {
@@ -533,7 +533,7 @@ private $deadtry;
 
 		if ($email != $this->email) 
 			
-			BD("UPDATE {$this->db} SET `{$bd_users['email']}`='".TextBase::SQLSafe($email)."' WHERE `{$bd_users['id']}`='".$this->id."'"); 
+			BD("UPDATE {$this->db} SET `{$bd_users['email']}`='".mcrDB::safe($email)."' WHERE `{$bd_users['id']}`='".$this->id."'"); 
 		
 		$this->email = $email;		
 		
@@ -587,7 +587,7 @@ private $deadtry;
 			return 1601; 
 		}		
 		
-		loadTool('skin.class.php');
+		mcrSys::loadTool('skin.class.php');
 		
 		$new_file_ratio = ($type == 'skin') ? skinGenerator2D::isValidSkin($way) : skinGenerator2D::isValidCloak($way); 
 		if (!$new_file_ratio or $new_file_ratio > (int) $this->getPermission('max_ratio')) {
@@ -603,7 +603,7 @@ private $deadtry;
 		else { 
 
 		unlink($way);
-		vtxtlog('[Ошибка модуля загрузки] Убедитесь, что папка "'.$tmp_dir.'" доступна для ЧТЕНИЯ \ ЗАПИСИ.');  
+		mcrSys::log('[Ошибка модуля загрузки] Ошибка копирования ['.$way.'] в ['.$new_way.'] . Проверьте доступ на ЧТЕНИЕ \ ЗАПИСЬ соответствующих папок.');  
 		return 1611; 
 		}
 		
@@ -626,16 +626,16 @@ private $deadtry;
 	
 	    if (!$this->id) return false;
 		
-		loadTool('catalog.class.php');
+		mcrSys::loadTool('catalog.class.php');
 		
 	    $this->deleteCloak();
 		$this->deleteSkin();
 		$this->deleteBuffer();			
 					
 		$result = BD("SELECT `id` FROM `{$bd_names['comments']}` WHERE `user_id`='".$this->id."'"); 
-		if ( mysql_num_rows( $result ) != 0 ) {
+		if ( $result->num_rows != 0 ) {
 	  
-		  while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+		  while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 		  		
 				$comment_del = new Comments_Item($line[0]);
 				$comment_del->Delete(); 
@@ -756,9 +756,9 @@ private $pavailable;
 
 		$result = BD("SELECT `$param` FROM `{$this->db}` WHERE `id`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1) {
+		if ($result->num_rows == 1) {
 		
-			$line  = mysql_fetch_array($result, MYSQL_NUM );
+			$line  = $result->fetch_array( MYSQL_NUM );
 			$value = (int)$line[0];
 			
 			if ($param != 'max_fsize' and
@@ -780,7 +780,7 @@ private $pavailable;
 		else            $sql_names .= "`{$this->pavailable[$i]}`"; 	
    	
 	$result = BD("SELECT $sql_names FROM `{$this->db}` WHERE `id`='".$this->id."'");  
-	return mysql_fetch_array( $result, MYSQL_ASSOC );	
+	return $result->fetch_array( MYSQL_ASSOC );	
 	}
 	
 	public function Exist() {
@@ -789,7 +789,7 @@ private $pavailable;
 		
 		$result = BD("SELECT `id` FROM `{$this->db}` WHERE `id`='".$this->id."'"); 
 
-		if ( mysql_num_rows( $result ) == 1 ) return true;
+		if ( $result->num_rows == 1 ) return true;
 		else return false;
 		
 	}
@@ -800,8 +800,8 @@ private $pavailable;
 		
 		if (!$name or !TextBase::StringLen($name)) return false;
 		
-		$result = BD("SELECT COUNT(*) FROM `{$this->db}` WHERE `name`='".TextBase::SQLSafe($name)."'");
-		$num   = mysql_fetch_array($result, MYSQL_NUM);
+		$result = BD("SELECT COUNT(*) FROM `{$this->db}` WHERE `name`='".mcrDB::safe($name)."'");
+		$num   = $result->fetch_array( MYSQL_NUM);
 		if ($num[0]) return false;	
 		
 		$sql_names = null; $sql_vars = null;
@@ -813,14 +813,14 @@ private $pavailable;
 			if ($key != 'max_fsize' and
                 $key != 'max_ratio' and
                 $key != 'lvl')	$value = ($value)? 1 : 0;				
-            else                $value = TextBase::SQLSafe((int) $value);
+            else                $value = mcrDB::safe((int) $value);
 			
 			if ($sql_names) $sql_names .= ",`$key`"; else $sql_names .= "`$key`"; 
 			if ($sql_vars)  $sql_vars  .= ",'$value'"; else $sql_vars .= "'$value'"; 
 		  }
 
-		$result = BD("INSERT INTO `{$this->db}` (`name`,$sql_names) values ('".TextBase::SQLSafe($name)."',$sql_vars)");	
-		if ($result and mysql_affected_rows()) $this->id = mysql_insert_id();
+		$result = BD("INSERT INTO `{$this->db}` (`name`,$sql_names) values ('".mcrDB::safe($name)."',$sql_vars)");	
+		if ($result and mcrDB::affectedRows()) $this->id = mcrDB::lastID();
 		else return false;
 	 
 		return true; 
@@ -830,8 +830,8 @@ private $pavailable;
 
 		$result = BD("SELECT `name` FROM `{$this->db}` WHERE `id`='".$this->id."'"); 
 
-		if ( mysql_num_rows( $result ) != 1 ) return false;
-        $line = mysql_fetch_array( $result, MYSQL_NUM );
+		if ( $result->num_rows != 1 ) return false;
+        $line = $result->fetch_array( MYSQL_NUM );
 		  
 		return $line[0];		
     }
@@ -840,8 +840,8 @@ private $pavailable;
 
 		$result = BD("SELECT `system` FROM `{$this->db}` WHERE `id`='".$this->id."'"); 
 
-		if ( mysql_num_rows( $result ) != 1 ) return false;
-        $line = mysql_fetch_array( $result, MYSQL_NUM );
+		if ( $result->num_rows != 1 ) return false;
+        $line = $result->fetch_array( MYSQL_NUM );
 		  
 		return ($line[0])? true : false;		
     }	
@@ -851,8 +851,8 @@ private $pavailable;
 		if (!$this->id) return false; 	
 		if (!$name or !TextBase::StringLen($name)) return false;
 		
-		$result = BD("SELECT COUNT(*) FROM `{$this->db}` WHERE `name`='".TextBase::SQLSafe($name)."' and `id`!='".$this->id."'");
-		$num   = mysql_fetch_array($result, MYSQL_NUM);
+		$result = BD("SELECT COUNT(*) FROM `{$this->db}` WHERE `name`='".mcrDB::safe($name)."' and `id`!='".$this->id."'");
+		$num   = $result->fetch_array( MYSQL_NUM);
 		if ($num[0]) return false;	
 		
 		$sql = null;
@@ -866,7 +866,7 @@ private $pavailable;
 				if ($key != 'max_fsize' and
 					$key != 'max_ratio' and
 					$key != 'lvl')	$value = ($permissions[$key])? 1 : 0;				
-				else				$value = TextBase::SQLSafe((int) $permissions[$key]);				
+				else				$value = mcrDB::safe((int) $permissions[$key]);				
 				
 			} else $value = 0;
 			
@@ -875,8 +875,8 @@ private $pavailable;
 		
 		if (!$sql) $sql = '';
 		
-		    $result = BD("UPDATE `{$this->db}` SET `name`='".TextBase::SQLSafe($name)."'$sql WHERE `id`='".$this->id."'"); 
-		if ($result and mysql_affected_rows()) return true;
+		    $result = BD("UPDATE `{$this->db}` SET `name`='".mcrDB::safe($name)."'$sql WHERE `id`='".$this->id."'"); 
+		if ($result and mcrDB::affectedRows()) return true;
 		
 		return true; 
 	}	
@@ -888,9 +888,9 @@ private $pavailable;
 		if ($this->IsSystem()) return false;
 		
 		$result = BD("SELECT `id` FROM `{$bd_names['users']}` WHERE `group`='".$this->id."'"); 
-		if ( mysql_num_rows( $result ) != 0 ) {
+		if ( $result->num_rows != 0 ) {
 	  
-		  while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+		  while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 		  		
 				$user_del = new User($line[0], $bd_users['id']);
 				$user_del->Delete(); 
@@ -901,7 +901,7 @@ private $pavailable;
 		$result = BD("DELETE FROM `{$this->db}` WHERE `id` = '".$this->id."' and `system` = '0'");
 		
 		$this->id = false;		
-		if ($result and mysql_affected_rows()) return true;
+		if ($result and mcrDB::affectedRows()) return true;
 		
 		return false; 
 	}	
@@ -915,7 +915,7 @@ Class GroupManager {
 		$result = BD("SELECT `id`, `name` FROM `{$bd_names['groups']}` ORDER BY `name` DESC LIMIT 0,90");  
 		$group_list = '';
 							
-		while ( $line = mysql_fetch_array( $result, MYSQL_ASSOC ) ) 
+		while ( $line = $result->fetch_array( MYSQL_ASSOC ) ) 
 		 $group_list .= '<option value="'.$line['id'].'" '.(($selected == $line['id'])?'selected':'').'>'.$line['name'].'</option>';
 		 
 		return $group_list;

@@ -1,7 +1,7 @@
 <?php
 if (!defined('MCR')) exit;
  
-loadTool('catalog.class.php');
+mcrSys::loadTool('catalog.class.php');
 
 if (isset($_GET['cid'])) {
 

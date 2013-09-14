@@ -4,12 +4,12 @@ if (empty($_POST['command']) and empty($_POST['userlist']))
 	  
 require('../system.php');
 
-BDConnect('mcraft.rcon');
+mcrDB::connect();
 
-loadTool('rcon.class.php');
-loadTool('user.class.php');
+mcrSys::loadTool('rcon.class.php');
+mcrSys::loadTool('user.class.php');
 
-MCRAuth::userLoad();	  
+MCRAuth::userLoad('mcraft_rcon');	  
 
 if (empty($user) or $user->lvl() < 15) exit;
 

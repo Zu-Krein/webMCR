@@ -2,10 +2,10 @@
 if (!defined('MCR')) exit;
 
 $result = BD("SELECT `id`,`message_full`,`message` FROM `{$bd_names['news']}`");
-$num = mysql_num_rows( $result );
+$num = $result->num_rows;
 if ($num) {
 	
-	while ( $line = mysql_fetch_array( $result ) ) {
+	while ( $line = $result->fetch_array() ) {
 	  
 	    $id = $line['id'];
 		$mess = TextBase::HTMLRestore($line['message']);

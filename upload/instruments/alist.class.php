@@ -367,14 +367,14 @@ class ThemeManager extends View {
 	}
 }
 
-class ControlManager extends Manager {
+class ControlManager extends View {
 private $work_skript;
 
     public function ControlManager($style_sd = false, $work_skript = '?mode=control') { 
 		
 		/*	Show subdirs used: /admin */
 		
-		parent::Manager($style_sd);
+		parent::View($style_sd);
 		
 		$this->work_skript = $work_skript;	
 	}
@@ -382,18 +382,18 @@ private $work_skript;
 	public function ShowUserListing($list = 1, $search_by = 'name', $input = false) {
 	global $bd_users,$bd_names;
 
-		$input = TextBase::SQLSafe($input);
+		$input = mcrDB::safe($input);
 	
 	    if ($input == 'banned') $input = 0;
 	
 	    if ($search_by == 'name') $result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE {$bd_users['login']} LIKE '%$input%' ORDER BY {$bd_users['login']} LIMIT ".(10*($list-1)).",10"); 
     elseif ($search_by == 'none') $result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` ORDER BY {$bd_users['login']} LIMIT ".(10*($list-1)).",10"); 
-	elseif ($search_by == 'ip'  ) $result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE {$bd_users['ip']} LIKE '%$input%' ORDER BY {$bd_users['login']} LIMIT ".(10*($list-1)).",10"); 
+	elseif ($search_by == 'ip'  ) $result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE {$bd_users['ip']} LIKE '%".mcrSys::binIP($input)."%' ORDER BY {$bd_users['login']} LIMIT ".(10*($list-1)).",10"); 
 	elseif ($search_by == 'lvl' ) {
 	
 		$result = BD("SELECT `id` FROM `{$bd_names['groups']}` WHERE `lvl`='$input'");
 		
-		$id_group  = mysql_fetch_array( $result, MYSQL_NUM );    
+		$id_group  = $result->fetch_array( MYSQL_NUM );    
 	    $input = $id_group[0];
 		
 	    $result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['group']}` = '$input' ORDER BY {$bd_users['login']} LIMIT ".(10*($list-1)).",10"); 
@@ -401,18 +401,18 @@ private $work_skript;
         
 		ob_start(); 		
 
-	          $resnum =  mysql_num_rows( $result );	
+	          $resnum =  $result->num_rows;	
 	    if ( !$resnum ) { include $this->GetView('admin/user/user_not_found.html'); return ob_get_clean(); }  
 		
         include $this->GetView('admin/user/user_find_header.html'); 
   
-		while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+		while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 		
             $inf_user = new User($line[0],$bd_users['id']);
 			
             $user_name = $inf_user->name();
             $user_id   = $inf_user->id();
-            $user_ip   = $inf_user->ip();
+            $user_ip   = mcrSys::trueIP($inf_user->ip());
             $user_lvl  = $inf_user->getGroupName();
 			$user_lvl_id = $inf_user->group();
 			
@@ -427,10 +427,10 @@ private $work_skript;
 
 	    if ($search_by == 'name') $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE {$bd_users['login']} LIKE '%$input%'");
 	elseif ($search_by == 'none') $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}`");
-	elseif ($search_by == 'ip'  ) $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE {$bd_users['ip']} LIKE '%$input%'");
+	elseif ($search_by == 'ip'  ) $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE {$bd_users['ip']} LIKE '%".mcrSys::binIP($input)."%'");
 	elseif ($search_by == 'lvl' ) $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE `{$bd_users['group']}`='$input'");
 		
-		$line = mysql_fetch_array($result);
+		$line = $result->fetch_array();
 		$html .= $this->arrowsGenerator($this->work_skript, $list, $line[0], 10);
       
      return $html;
@@ -446,13 +446,13 @@ private $work_skript;
 	// TODO increase priority by votes
 	
     $result = BD("SELECT * FROM `{$bd_names['servers']}` ORDER BY priority DESC LIMIT ".(10*($list-1)).",10");  
-    $resnum = mysql_num_rows( $result );
+    $resnum = $result->num_rows;
 	
 	if ( !$resnum ) { include $this->GetView('admin/server/servers_not_found.html'); return ob_get_clean(); }  
 		
 	include $this->GetView('admin/server/servers_header.html'); 
 		
-		while ( $line = mysql_fetch_array( $result ) ) {
+		while ( $line = $result->fetch_array() ) {
 		
             $server_name     = $line['name'];
 			$server_address  = $line['address'];
@@ -475,7 +475,7 @@ private $work_skript;
 	$html = ob_get_clean();
 	
 		$result = BD("SELECT COUNT(*) FROM `{$bd_names['servers']}`");
-		$line = mysql_fetch_array($result); 
+		$line = $result->fetch_array(); 
 		$resnum = $line[0];
 					  		  
 		$html .= $this->arrowsGenerator($this->work_skript, $list, $line[0], 10);
@@ -486,22 +486,22 @@ private $work_skript;
     public function ShowIpBans($list) {
     global $bd_names;
 
-    RefreshBans();
+    mcrSys::refreshBans();
 
     ob_start(); 	
 	
     include $this->GetView('admin/ban/ban_ip_caption.html');
 	
     $result = BD("SELECT * FROM `{$bd_names['ip_banning']}` ORDER BY ban_until DESC LIMIT ".(10*($list-1)).",10");  
-    $resnum = mysql_num_rows( $result );
+    $resnum = $result->num_rows;
 	
 	if ( !$resnum ) { include $this->GetView('admin/ban/ban_ip_not_found.html'); return ob_get_clean(); }  
 		
 	include $this->GetView('admin/ban/ban_ip_header.html'); 
 		
-		while ( $line = mysql_fetch_array( $result ) ) {
+		while ( $line = $result->fetch_array() ) {
 		
-             $ban_ip    = $line['IP'];
+             $ban_ip    = mcrSys::trueIP($line['IP']);
              $ban_start = $line['time_start'];
              $ban_end   = $line['ban_until'];
 			 $ban_type  = $line['ban_type'];
@@ -515,7 +515,7 @@ private $work_skript;
 	$html = ob_get_clean();
 	
 		$result = BD("SELECT COUNT(*) FROM `{$bd_names['ip_banning']}`");
-		$line = mysql_fetch_array($result); 
+		$line = $result->fetch_array(); 
 		$resnum = $line[0];
 					  		  
 		$html .= $this->arrowsGenerator($this->work_skript, $list, $line[0], 10);

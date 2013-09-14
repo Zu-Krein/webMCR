@@ -6,13 +6,13 @@ $bd_users = array (
 	'login'		=> 'name',
 	'id'		=> 'member_id',  
 	'email'		=> 'email',
-	'ctime' 	=> 'joined',
-	'ip' 		=> 'ip_address',   
+	'ctime' 	=> 'joined', 
 	'password' 	=> 'members_pass_hash', 	
 	'salt_pwd' 	=> 'members_pass_salt', 	
 	
 /* Required MCR fields */
 
+	'ip'		=> 'mcr_ip', // CMS analog - 'ip_address' 
 	'deadtry' 	=> 'mcr_deadtry',
 	'female'	=> 'mcr_gender',  
 	'group' 	=> 'mcr_group',
@@ -20,7 +20,7 @@ $bd_users = array (
 	'session'	=> 'mcr_session',
 	'action_log' => 'mcr_action_log',
 	'server' 	=> 'mcr_server',
-        'clientToken'   => 'mcr_clientToken'    
+    'clientToken'   => 'mcr_clientToken'    
 );
 
 /* Exists IPB fields */

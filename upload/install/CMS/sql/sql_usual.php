@@ -10,7 +10,7 @@ BD("CREATE TABLE IF NOT EXISTS `{$bd_names['users']}` (
   `{$bd_users['email']}` varchar(50) default NULL,
   `{$bd_users['password']}` char(32) DEFAULT NULL,
   `{$bd_users['tmp']}` char(32) NOT NULL DEFAULT '0',
-  `{$bd_users['ip']}` varchar(16) DEFAULT NULL,
+  `{$bd_users['ip']}` binary(16) DEFAULT NULL,
   `{$bd_users['group']}` int(10) NOT NULL DEFAULT 1,
   `comments_num` int(10) NOT NULL DEFAULT 0,
   `gameplay_last` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',

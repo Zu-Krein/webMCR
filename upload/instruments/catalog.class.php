@@ -24,9 +24,9 @@ private $priority;
 		$this->id = (int)$id; if (!$this->id) return false;
 
 		$result = BD("SELECT `name`,`priority` FROM `".$this->db."` WHERE `id`='".$this->id."'"); 
-		if ( mysql_num_rows( $result ) != 1 ) { $this->id = false; return false; }
+		if ( $result->num_rows != 1 ) { $this->id = false; return false; }
 		
-        $line = mysql_fetch_array( $result, MYSQL_NUM );
+        $line = $result->fetch_array( MYSQL_NUM );
 		
 		$this->name 	= $line[0];
 		$this->priority = (int)$line[1];
@@ -43,15 +43,15 @@ private $priority;
 		      
 		if (!$name or !TextBase::StringLen($name)) return false;
 		
-		$result = BD("SELECT COUNT(*) FROM `".$this->db."` WHERE `name`='".TextBase::SQLSafe($name)."'");
-		$num    = mysql_fetch_array($result, MYSQL_NUM);
+		$result = BD("SELECT COUNT(*) FROM `".$this->db."` WHERE `name`='".mcrDB::safe($name)."'");
+		$num    = $result->fetch_array( MYSQL_NUM);
 		if ($num[0]) return false;				
 		
 		$priority    = (int) $priority;
 
-		if (BD("INSERT INTO `".$this->db."` ( `name`, `priority`, `description`) values ( '".TextBase::SQLSafe($name)."', '".TextBase::SQLSafe($priority)."','".TextBase::SQLSafe($description)."' )"))		
+		if (BD("INSERT INTO `".$this->db."` ( `name`, `priority`, `description`) values ( '".mcrDB::safe($name)."', '".mcrDB::safe($priority)."','".mcrDB::safe($description)."' )"))		
 		
-		$this->id = mysql_insert_id();
+		$this->id = mcrDB::lastID();
 		
 		else return false;
 		
@@ -75,8 +75,8 @@ private $priority;
 	public function GetDescription() {
 		$result = BD("SELECT `description` FROM `".$this->db."` WHERE id='".$this->id."'"); 
 
-		if ( mysql_num_rows( $result ) != 1 ) return false;
-        $line = mysql_fetch_array( $result, MYSQL_NUM );
+		if ( $result->num_rows != 1 ) return false;
+        $line = $result->fetch_array( MYSQL_NUM );
 		  
 		return $line[0];		
 	}
@@ -87,13 +87,13 @@ private $priority;
 		
 		if (!$name or !TextBase::StringLen($name)) return false;
 		
-		$result = BD("SELECT COUNT(*) FROM `".$this->db."` WHERE `name`='".TextBase::SQLSafe($name)."' and `id`!='".$this->id."'");
-		$num  	= mysql_fetch_array($result, MYSQL_NUM);
+		$result = BD("SELECT COUNT(*) FROM `".$this->db."` WHERE `name`='".mcrDB::safe($name)."' and `id`!='".$this->id."'");
+		$num  	= $result->fetch_array( MYSQL_NUM);
 		if ($num[0]) return false;	
 				
 		$priority    = (int) $priority; 
 		
-		BD("UPDATE `".$this->db."` SET `name`='".TextBase::SQLSafe($name)."',`priority`='".TextBase::SQLSafe($priority)."',`description`='".TextBase::SQLSafe($description)."' WHERE `id`='".$this->id."'"); 		
+		BD("UPDATE `".$this->db."` SET `name`='".mcrDB::safe($name)."',`priority`='".mcrDB::safe($priority)."',`description`='".mcrDB::safe($description)."' WHERE `id`='".$this->id."'"); 		
 		
 		$this->name 	= $name;
 		$this->priority = $priority;
@@ -106,9 +106,9 @@ private $priority;
 		if (!$this->Exist() or $this->IsSystem()) return false;
 		
 		$result = BD("SELECT `id` FROM `{$bd_names['news']}` WHERE `category_id`='".$this->id."'"); 
-		if ( mysql_num_rows( $result ) != 0 ) {
+		if ( $result->num_rows != 0 ) {
 	  
-		  while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+		  while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 		  		
 				$news_item = new News_Item($line[0]);
 				$news_item->Delete(); 
@@ -130,7 +130,7 @@ Class CategoryManager {
 		$result = BD("SELECT `id`,`name` FROM {$bd_names['news_categorys']} ORDER BY `priority` DESC LIMIT 0,90");  
 		$cat_list = '';
 							
-		while ( $line = mysql_fetch_array( $result, MYSQL_ASSOC ) ) 
+		while ( $line = $result->fetch_array( MYSQL_ASSOC ) ) 
 		 $cat_list .= '<option value="'.$line['id'].'" '.(($selected == $line['id'])?'selected':'').'>'.$line['name'].'</option>';
 	
     return $cat_list;	
@@ -173,10 +173,10 @@ private $user_id;
 	
 		$this->id = (int)$id; if (!$this->id) return false;
 		
-		$result = BD("SELECT `user_id` FROM `{$this->db}` WHERE `id`='".TextBase::SQLSafe($this->id)."'"); 
-		if ( mysql_num_rows( $result ) != 1 ) {	$this->id = false; return false; }		
+		$result = BD("SELECT `user_id` FROM `{$this->db}` WHERE `id`='".mcrDB::safe($this->id)."'"); 
+		if ( $result->num_rows != 1 ) {	$this->id = false; return false; }		
 	
-	    $line = mysql_fetch_array($result, MYSQL_NUM);        
+	    $line = $result->fetch_array( MYSQL_NUM);        
         $this->user_id = (int)$line[0];		
 	}
 	
@@ -189,12 +189,12 @@ private $user_id;
 		$message = Message::Comment($message);
 		if ( TextBase::StringLen($message) < 2 ) return 1701;
 
-		$result = BD("SELECT `id` FROM `{$bd_names['news']}` WHERE `id`='".TextBase::SQLSafe($item_id)."'"); 
-		if ( mysql_num_rows( $result ) != 1 ) return 1702;			
+		$result = BD("SELECT `id` FROM `{$bd_names['news']}` WHERE `id`='".mcrDB::safe($item_id)."'"); 
+		if ( $result->num_rows != 1 ) return 1702;			
 			
-		if ( BD("INSERT INTO `{$this->db}` ( `message`, `time` , `item_id`, `user_id`) values ('".TextBase::SQLSafe($message)."', NOW(), '".TextBase::SQLSafe($item_id)."' , '".$user->id()."')") ) {
+		if ( BD("INSERT INTO `{$this->db}` ( `message`, `time` , `item_id`, `user_id`) values ('".mcrDB::safe($message)."', NOW(), '".mcrDB::safe($item_id)."' , '".$user->id()."')") ) {
 			
-		$this->id = mysql_insert_id();
+		$this->id = mcrDB::lastID();
 		$this->user_id = $user->id();
 		
 		BD("UPDATE {$bd_names['users']} SET comments_num=comments_num+1 WHERE {$bd_users['id']}='".$user->id()."'"); 		
@@ -213,9 +213,9 @@ private $user_id;
 		if (!$this->Exist()) return $this->ShowPage('comments/comment_not_found.html');
 			
 		$result = BD("SELECT DATE_FORMAT(time,'%d.%m.%Y %H:%i:%S') AS time,message,item_id FROM `{$this->db}` WHERE id='".$this->id."'"); 
-		if (!mysql_num_rows( $result )) return ''; 
+		if (!$result->num_rows) return ''; 
 		
-		$line = mysql_fetch_array( $result, MYSQL_ASSOC );
+		$line = $result->fetch_array( MYSQL_ASSOC );
 			
 		$admin_buttons 	= '';
 		$female_mark	= '';
@@ -257,7 +257,7 @@ private $user_id;
 
 	public function Edit($message) {
 		$message = Message::Comment($message);				
-		BD("UPDATE `{$this->db}` SET message='".TextBase::SQLSafe($message)."' WHERE id='".$this->id."'");
+		BD("UPDATE `{$this->db}` SET message='".mcrDB::safe($message)."' WHERE id='".$this->id."'");
 		
 		return true; 
 	}	
@@ -290,9 +290,9 @@ private $title;
 	    $this->id = (int)$id; if (!$this->id) return false;
 
 		$result = BD("SELECT `category_id`,`title` FROM `{$this->db}` WHERE `id`='".$this->id."'"); 
-		if ( mysql_num_rows( $result ) != 1 ) { $this->id = false; return false; }
+		if ( $result->num_rows != 1 ) { $this->id = false; return false; }
 		
-		$line = mysql_fetch_array( $result, MYSQL_NUM );
+		$line = $result->fetch_array( MYSQL_NUM );
 		$this->category_id = $line[0];	
 		$this->title = $line[1];	
 		
@@ -305,14 +305,14 @@ private $title;
 		if ($this->Exist() or empty($user) or !$user->getPermission('add_news')) return false; 
 					
 	    $sql = ''; $sql2 = '';		
-	    if ( $message_full ) { $sql = '`message_full`, '; $sql2 = "'".TextBase::SQLSafe($message_full)."', "; }
+	    if ( $message_full ) { $sql = '`message_full`, '; $sql2 = "'".mcrDB::safe($message_full)."', "; }
 		
 		$cat_id = (int) $cat_id;
 		if (!CategoryManager::ExistByID($cat_id)) return false; 
 
-		BD("INSERT INTO `{$this->db}` ( `title`, `message`, ".$sql."`time`, `category_id`, `user_id`) VALUES ( '".TextBase::SQLSafe($title)."', '".TextBase::SQLSafe($message)."', ".$sql2."NOW(), '".TextBase::SQLSafe($cat_id)."', '".$user->id()."' )");
+		BD("INSERT INTO `{$this->db}` ( `title`, `message`, ".$sql."`time`, `category_id`, `user_id`) VALUES ( '".mcrDB::safe($title)."', '".mcrDB::safe($message)."', ".$sql2."NOW(), '".mcrDB::safe($cat_id)."', '".$user->id()."' )");
 		
-		$this->id = mysql_insert_id();
+		$this->id = mcrDB::lastID();
 		$this->category_id 	= $cat_id;
 		$this->title 		= $title;
 		
@@ -350,7 +350,7 @@ private $title;
 	if (!$this->Exist()) return $this->ShowPage('news_not_found.html');
 		
 		$result = BD("SELECT COUNT(*) FROM `{$bd_names['comments']}` WHERE item_id='".$this->id."'");
-		$line   = mysql_fetch_array($result, MYSQL_NUM);	  
+		$line   = $result->fetch_array( MYSQL_NUM);	  
 		$comments = $line[0];	
 		
 		$sql = ( $full_text )? ' `message_full`,' : ''; //:%S
@@ -363,9 +363,9 @@ private $title;
 		}
 		
 		$result = BD("SELECT DATE_FORMAT(time,'%d.%m.%Y') AS date, DATE_FORMAT(time,'%H:%i') AS time,".$sql_hits." `likes`, `dislikes`,".$sql." `message` FROM `{$this->db}` WHERE `id`='".$this->id."'"); 
-		if (!mysql_num_rows( $result )) return ''; 
+		if (!$result->num_rows) return ''; 
 		
-		$line = mysql_fetch_array($result, MYSQL_ASSOC);
+		$line = $result->fetch_array( MYSQL_ASSOC);
 		
 		if ($full_text) $line['message_full'] = TextBase::CutWordWrap($line['message_full']);
 		$line['message'] = TextBase::CutWordWrap($line['message']);
@@ -418,7 +418,7 @@ private $title;
 				
 		if(!$message_full) $message_full = '';
 				
-		BD("UPDATE `{$this->db}` SET `message`='".TextBase::SQLSafe($message)."',`title`='".TextBase::SQLSafe($title)."',`message_full`='".TextBase::SQLSafe($message_full)."',`category_id`='".TextBase::SQLSafe($cat_id)."' WHERE `id`='".$this->id."'"); 		
+		BD("UPDATE `{$this->db}` SET `message`='".mcrDB::safe($message)."',`title`='".mcrDB::safe($title)."',`message_full`='".mcrDB::safe($message_full)."',`category_id`='".mcrDB::safe($cat_id)."' WHERE `id`='".$this->id."'"); 		
 		
 		$this->category_id 	= (int)$cat_id;
 		$this->title 		= $title;
@@ -433,9 +433,9 @@ private $title;
 			!$this->Exist()) return false; 
 		
 		$result = BD("SELECT id FROM `{$bd_names['comments']}` WHERE `item_id`='".$this->id."'"); 
-		if ( mysql_num_rows( $result ) != 0 ) {
+		if ( $result->num_rows != 0 ) {
 	  
-		  while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+		  while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 		  		
 				$comments_item = new Comments_Item($line[0]);
 				$comments_item->Delete(); 
@@ -453,13 +453,13 @@ private $title;
 
 /* Менеджер вывода записей из каталога */
 
-Class NewsManager extends Manager {
+Class NewsManager extends View {
 private $work_skript;
 private $category_id;
 
     public function NewsManager($category = 1, $style_sd = false, $work_skript = 'index.php?') { // category = -1 -- all last news
 	
-		parent::Manager($style_sd);
+		parent::View($style_sd);
 	
 		if ((int) $category <= 0) $category = 0;
 		
@@ -558,8 +558,8 @@ private $category_id;
 			
 			$mesid  = (int)$_GET['edit']; 
 			
-			$result = BD("SELECT * FROM `{$bd_names['news']}` WHERE `id`='".TextBase::SQLSafe($mesid)."'");
-			$line   = mysql_fetch_array($result, MYSQL_ASSOC);
+			$result = BD("SELECT * FROM `{$bd_names['news']}` WHERE `id`='".mcrDB::safe($mesid)."'");
+			$line   = $result->fetch_array( MYSQL_ASSOC);
 			
 			$editMode         = $mesid;
 			$editCategory     = $line['category_id'];
@@ -602,7 +602,7 @@ private $category_id;
     $news_pnum  = $config['news_by_page'];
 	
 	$result = BD("SELECT COUNT(*) FROM `{$bd_names['news']}`".$sql);
-	$line = mysql_fetch_array($result, MYSQL_NUM );
+	$line = $result->fetch_array( MYSQL_NUM );
 		  
 	$newsnum = $line[0];	
 	if (!$newsnum) {
@@ -613,9 +613,9 @@ private $category_id;
 	
 	$result = BD("SELECT id FROM `{$bd_names['news']}`".$sql."ORDER by time DESC LIMIT ".($news_pnum*($list-1)).",".$news_pnum);
 
-	if ( mysql_num_rows( $result ) != 0 ) {
+	if ( $result->num_rows != 0 ) {
 
-		  while ( $line = mysql_fetch_array( $result , MYSQL_NUM ) ) {
+		  while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 		  
 		         $news_item = new News_Item($line[0], $this->st_subdir);
 				 
@@ -673,8 +673,8 @@ private $category_id;
 		
 		if (!$item_exist) return $html_news;	
 
-		$result = BD("SELECT COUNT(*) FROM `{$bd_names['comments']}` WHERE item_id='".TextBase::SQLSafe($id)."'");
-		$line = mysql_fetch_array($result);
+		$result = BD("SELECT COUNT(*) FROM `{$bd_names['comments']}` WHERE item_id='".mcrDB::safe($id)."'");
+		$line = $result->fetch_array();
 		
 		$comments_html = '';  
 		$arrows_html = '';  
@@ -688,10 +688,10 @@ private $category_id;
 			$list_def = ($config['comm_revers'])? ceil($commentnum / $comm_pnum) : 1;	
 			$list = ($list <= 0)? $list_def : (int)$list;		
 			
-			$result = BD("SELECT id FROM `{$bd_names['comments']}` WHERE item_id='".TextBase::SQLSafe($id)."' ORDER by time $comm_order LIMIT ".($comm_pnum*($list-1)).",".$comm_pnum); 
-			if ( mysql_num_rows( $result ) != 0 ) {			
+			$result = BD("SELECT id FROM `{$bd_names['comments']}` WHERE item_id='".mcrDB::safe($id)."' ORDER by time $comm_order LIMIT ".($comm_pnum*($list-1)).",".$comm_pnum); 
+			if ( $result->num_rows != 0 ) {			
 			
-			  while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+			  while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 			  
 					 $comments_item = new Comments_Item($line[0], $this->st_subdir);
 					 

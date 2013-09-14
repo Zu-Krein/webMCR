@@ -1,8 +1,8 @@
 <?php
 require('../system.php');
 
-loadTool('ajax.php');
-loadTool('monitoring.class.php');
+mcrSys::loadTool('ajax.php');
+mcrSys::loadTool('monitoring.class.php');
 
 if (empty($_POST['id'])) exit;
 $id = (int)$_POST['id'];
@@ -13,7 +13,7 @@ if (isset($_POST['now']) and !empty($user) and $user->lvl() >= 15)
 
 $now = true;
 
-BDConnect('monitoring');
+mcrDB::connect('monitoring');
 
 $server = new Server($id);
 $server->UpdateState($now);

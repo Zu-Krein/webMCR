@@ -1,29 +1,12 @@
-<?php
-/*
-    This file is part of webMCR.
-
-    webMCR is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    webMCR is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with webMCR.  If not, see <http://www.gnu.org/licenses/>.
-
- */
+<?php /* WEB-APP : WebMCR (С) 2013 NC22 | License : GPLv3 */
 
 header('Content-Type: text/html; charset=UTF-8');
 
 require_once('./system.php');
-BDConnect('index');
+mcrDB::connect();
 
-loadTool('user.class.php');
-MCRAuth::userLoad();
+mcrSys::loadTool('user.class.php');
+MCRAuth::userLoad('index');
 
 function GetRandomAdvice() { return ($quotes = @file(View::Get('sovet.txt')))? $quotes[rand(0, sizeof($quotes)-1)] : "Советов нет"; }
 
@@ -45,9 +28,17 @@ global $addition_events, $content_js;
 	return true;
 }
 
+function InitJS () {
+global $addition_events;
+	
+	$init_js  = "var pbm; var way_style = '".DEF_STYLE_URL."'; var cur_style = '".View::GetURL()."'; var base_url  = '".BASE_URL."';" ;
+	$init_js .= "window.onload = function () { mcr_init(); ". $addition_events ." } " ; 
+	return '<script type="text/javascript">' . $init_js . '</script>' ;
+}
+
 $menu = new Menu();
 
-if ($config['offline'] and (empty($user) or $user->group() != 3)) exit(View::ShowStaticPage('site_closed.html', ''));
+if ($config['offline'] and (empty($user) or $user->group() != 3)) exit(View::ShowStaticPage('site_closed.html'));
 
 $content_main = ''; $content_side = ''; $addition_events = ''; $content_advice = GetRandomAdvice(); $content_js = '';
 
@@ -72,7 +63,7 @@ elseif (isset($_POST['mode'])) $mode = $_POST['mode'];
 if ($mode == 'side') $mode = $config['s_dpage'];
 
 switch ($mode) {
-    case 'start': $page = 'Начать игру'; $content_main = View::ShowStaticPage('start_game.html', '');  break;
+    case 'start': $page = 'Начать игру'; $content_main = View::ShowStaticPage('start_game.html');  break;
 	case 'register': 
 	case 'news':	  include('./location/news.php');		break;
 	case 'news_full': include('./location/news_full.php');	break;
@@ -87,7 +78,7 @@ switch ($mode) {
 
 include('./location/side.php'); 
 
-$content_menu = $menu->Show();
+$content_menu = $menu->Show(); $content_js .= InitJS();
 
 include View::Get('index.html');
 ?>

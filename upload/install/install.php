@@ -3,6 +3,7 @@ header('Content-Type: text/html; charset=UTF-8');
 
 error_reporting(E_ALL); 
 
+define('SET_IPv6', false); // not full supported now
 define('MCR_ROOT', dirname(dirname(__FILE__)).'/');
 
 $mode = (!empty($_POST['mode']) or !empty($_GET['mode']))? ((empty($_GET['mode']))? $_POST['mode'] : $_GET['mode'] ): $mode = 'usual';
@@ -49,17 +50,18 @@ include './CMS/config/config_usual.php';
 
 define('MCR_STYLE', MCR_ROOT.$site_ways['style']);
 
-include MCR_ROOT.'instruments/timezones.php';
+include MCR_ROOT . 'instruments/timezones.php';
 
 define('STYLE_URL', $site_ways['style']);
 define('DEF_STYLE_URL', STYLE_URL . View::def_theme . '/');
-define('CUR_STYLE_URL', DEF_STYLE_URL);
+
+$i_sd = 'other/install/'; $IP_size = ( SET_IPv6 ) ? 16 : 4;
 
 $page = 'Настройка '.PROGNAME;
 $save_conf_err = 'Ошибка создания \ перезаписи файла '.MCR_ROOT.'config.php (корневая дирректория сайта). Папка защищена от записи \ файл не доступен для записи. Настройки не были сохранены.';
 $content_advice = 'Заполните форму для завершения установки '.PROGNAME;
 $content_servers = ''; $content_js = '';
-$content_side = Manager::ShowStaticPage('./style/install_side.html');
+$content_side = View::ShowStaticPage('install_side.html', $i_sd);
 
 $addition_events = '';
 $info = '';  $cErr = '';
@@ -70,6 +72,8 @@ $menu->AddItem($page, BASE_URL.'install/install.php', true);
 
 $create_ways = array("skins", "cloaks", "distrib");
 $content_menu = $menu->Show();
+
+function BD( $query ) {	return mcrDB::ask($query); } // depricated
 
 function checkBaseRequire() {
 global $cErr, $site_ways, $create_ways;	
@@ -98,6 +102,7 @@ if ( !function_exists('json_encode'))
 	$mcraft_dir = MCR_ROOT.$site_ways['mcraft'];
 	
 	checkRWOut(MCR_ROOT.$site_ways['mcraft']);
+	checkRWOut(MCR_ROOT.'style/');
 	checkRWOut($mcraft_dir.'tmp/skin_buffer/');
 	checkRWOut($mcraft_dir.'userdata/');
 	
@@ -169,14 +174,6 @@ global $main_cms, $mode, $info;
 	return false;
 }
 
-function BD( $query ) {
-    return mysql_query( $query );
-}
-
-function BD_ColumnExist($table, $column) {
-	return (@mysql_query("SELECT `$column` FROM `$table` LIMIT 0, 1"))? true : false;
-}
-
 function Root_url(){
 	$root_url = str_replace('\\', '/', $_SERVER['PHP_SELF']); 
 	$root_url = explode("install/install.php", $root_url, -1);
@@ -191,22 +188,8 @@ function Mode_rewrite(){
 	  $modules = apache_get_modules();
 	  return in_array('mod_rewrite', $modules);
 	  
-	} else return getenv('HTTP_MOD_REWRITE')=='On' ? true : false ;	
+	} else return getenv('HTTP_MOD_REWRITE') == 'On' ? true : false ;	
 	return false;
-}
-
-function DBConnect() {
-global $link,$config;
-
-$link = mysql_connect($config['db_host'].':'.$config['db_port'], $config['db_login'],  $config['db_passw'] );
-if (!$link) return 1;
-if (!mysql_select_db($config['db_name'],$link)) return 2;
-
-BD("set character_set_client = 'utf8'"); 
-BD("set character_set_results = 'utf8'"); 
-BD("set collation_connection = 'utf8_general_ci'");  
-
-return false;
 }
 
 function ConfigPostStr($postKey){
@@ -228,13 +211,14 @@ global $config,$bd_names,$bd_users,$info;
 	elseif ( !TextBase::StringLen($site_repassword)	) $info = 'Введите повтор пароля.';
 	elseif ( strcmp($site_password,$site_repassword)) $info = 'Пароли не совпадают.';
 	else {
-
-		$result = BD("SELECT `{$bd_users['login']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['login']}`='$site_user'");			  
-		if ( mysql_num_rows($result) ) BD("DELETE FROM `{$bd_names['users']}` WHERE `{$bd_users['login']}`='$site_user'");
-					
+	
 		require_once(MCR_ROOT.'instruments/auth/'.$config['p_logic'].'.php');
-				
-		BD("INSERT INTO `{$bd_names['users']}` (`{$bd_users['login']}`,`{$bd_users['password']}`,`{$bd_users['ip']}`,`{$bd_users['group']}`) VALUES('$site_user','".MCRAuth::createPass($site_password)."','127.0.0.1',3)");	
+
+		$sql  = "INSERT INTO `{$bd_names['users']}` (`{$bd_users['login']}`,`{$bd_users['password']}`,`{$bd_users['ip']}`,`{$bd_users['group']}`) ";
+		$sql .= "VALUES('$site_user','".MCRAuth::createPass($site_password)."', '".mcrSys::getIP()."', 3) ";
+		$sql .= "ON DUPLICATE KEY UPDATE `{$bd_users['group']}` = '3', `{$bd_users['password']}` = '".MCRAuth::createPass($site_password)."', `{$bd_users['ip']}` = '".mcrSys::getIP()."'";
+		
+		mcrDB::ask($sql);	
 		$result = true;
 	}
 
@@ -263,9 +247,8 @@ switch ($step) {
 		$config['db_login'] = $mysql_user     ;
 		$config['db_passw'] = $mysql_password ;
 		
-				$connect_result = DBConnect();	
-			if ($connect_result == 1) $info = 'Данные для подключения к БД не верны. Возможно не правильно указан логин и пароль.';
-		elseif ($connect_result == 2) $info = 'Не найдена база данных с именем '.$mysql_bd;
+				$connect_result = mcrDB::connect(false, false);	
+			if ($connect_result !== true) $info = 'Данные для подключения к БД не верны. ' . $connect_result;
 		else {
 		    
 			$config['rewrite'] = Mode_rewrite();
@@ -292,8 +275,8 @@ switch ($step) {
 		break;
 	}
 	
-		$connect_result = DBConnect();		
-	if ($connect_result) { $info = 'Ошибка настройки соединения с БД.'; break; }	
+		$connect_result = mcrDB::connect(false, false);	
+	if ($connect_result !== true) { $info = 'Ошибка настройки соединения с БД.'; break; }	
 	
 	if ($main_cms) {
 		
@@ -306,12 +289,12 @@ switch ($step) {
 		
 		$config['p_sync']  = (empty($_POST['session_sync']))? false : true;
 		
-		$result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['login']}`='$site_user'");
+		$result = mcrDB::ask("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['login']}`='$site_user'");
 		
 		if (is_bool($result) and $result == false) { $info = 'Название таблицы пользователей указано неверно.'; break; }		
-		if (!mysql_num_rows( $result )) { $info = 'Пользователь с таким именем не найден.'; break; }		
+		if (!$result->num_rows) { $info = 'Пользователь с таким именем не найден.'; break; }		
 		
-		$line = mysql_fetch_array($result, MYSQL_NUM);		
+		$line = $result->fetch_array( MYSQL_NUM);		
 		
 		if ($mode == 'xenforo') {
 		
@@ -321,13 +304,13 @@ switch ($step) {
 			$site_ways['main_cms'] = $cms_way;			
 			$bd_names['user_auth']  = ConfigPostStr('bd_auth_xenforo');
 			
-			$result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['id']}`='".$line[0]."'");		
+			$result = mcrDB::ask("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['id']}`='".$line[0]."'");		
 			if (is_bool($result) and $result == false) { $info = 'Название таблицы c дополнительными данными указано неверно.'; break; }
 		}
 			
 		if ($mode == 'xauth' and !CreateAdmin($site_user)) break;		
 			
-		if ($mode != 'xauth') BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['group']}`='3' WHERE `{$bd_users['login']}`='$site_user'");	
+		if ($mode != 'xauth') mcrDB::ask("UPDATE `{$bd_names['users']}` SET `{$bd_users['group']}`='3' WHERE `{$bd_users['login']}`='$site_user'");	
 		$step = 3; 	
 		MainConfig::SaveOptions();			
 		
@@ -365,35 +348,35 @@ checkBaseRequire();
 
 ob_start(); 
 
-if ($info) include './style/info.html'; 
+if ($info) include View::Get('info.html', $i_sd);  
 if ($cErr) {
 	$info = $cErr;
 	$info_color = 'alert-error';
-	include './style/info.html'; 
+	include View::Get('info.html', $i_sd); 
 }
 
 switch ($step) {
 	case 1: 
-	include './style/install_method.html'; 
-	include './style/install.html';	
+	include View::Get('install_method.html', $i_sd);
+	include View::Get('install.html', $i_sd);	
 	break;
 	case 2: 
 	switch ($mode) {
-		case 'usual':  include('./style/install_user.html'); break;
+		case 'usual':  include View::Get('install_user.html', $i_sd); break;
 		case 'xenforo': 
-		case 'xauth': include('./style/install_'.$mode.'.html'); break;
-		case 'authme': include('./style/install_xauth.html'); break;
+		case 'xauth': include View::Get('install_'.$mode.'.html', $i_sd); break;
+		case 'authme': include View::Get('install_xauth.html', $i_sd); break; ;
 		case 'ipb': 
 		case 'joomla':		
 		case 'dle':
-		case 'wp': include('./style/install_mcms.html'); break;
+		case 'wp': include View::Get('install_mcms.html', $i_sd); break; 
 	} 	
 	break;
-	case 3: include './style/install_constants.html'; break;
-	default: include './style/other.html'; break;
+	case 3: include View::Get('install_constants.html', $i_sd); break; 
+	default: include View::Get('other.html', $i_sd); break; 
 }
 
 $content_main = ob_get_clean();
 
-include_once View::Get('index.html');
+include View::Get('index.html');
 ?>

@@ -7,11 +7,12 @@ SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE IF EXISTS `accounts`,`ip_banning`,`news`,`news_categorys`,`groups`,`data`,`comments`,`servers`;
 	
 CREATE TABLE IF NOT EXISTS `action_log` (
-  `IP` varchar(16) NOT NULL,
+  `IP` binary(16) NOT NULL,
   `first_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `last_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `query_count` int(10) NOT NULL DEFAULT 1,
-  `info` varchar(255) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `info` text DEFAULT NULL,
   PRIMARY KEY (`IP`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 	
@@ -56,21 +57,21 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `last_update` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `online` tinyint(1) DEFAULT 0,
   `rcon` varchar(255) DEFAULT '',
-  `players` text default NULL,
+  `players` text DEFAULT NULL,
   `method` tinyint(1) DEFAULT 0,
-  `address` varchar(255) default NULL,
+  `address` varchar(255) DEFAULT NULL,
   `port` int(10) DEFAULT 25565,
-  `name` varchar(255) default NULL,
-  `info` char(255) default NULL,
-  `numpl` char(32) default NULL,
-  `slots` char(32) default NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `info` char(255) DEFAULT NULL,
+  `numpl` char(32) DEFAULT NULL,
+  `slots` char(32) DEFAULT NULL,
   `main_page` tinyint(1) DEFAULT 0,
   `news_page` tinyint(1) DEFAULT 0,
   `stat_page` tinyint(1) DEFAULT 0,
   `priority` tinyint(1) DEFAULT 0,
   `main` tinyint(1) DEFAULT 0,
   `refresh_time` smallint(3) NOT NULL DEFAULT '5',
-  `service_user` char(64) default NULL,
+  `service_user` char(64) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
@@ -117,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   `email` varchar(50) default NULL,
   `password` char(32) DEFAULT NULL,
   `tmp` char(32) NOT NULL DEFAULT '0',
-  `ip` varchar(16) DEFAULT NULL,
+  `ip` binary(16) NOT NULL,
   `group` int(10) NOT NULL DEFAULT 1,
   `deadtry` tinyint(1) DEFAULT 0,
 
@@ -145,7 +146,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 -- Баны по IP для защиты от повторной регистрации
 
 CREATE TABLE IF NOT EXISTS `ip_banning` (
-  `IP` varchar(16) NOT NULL,
+  `IP` binary(16) NOT NULL,
   `time_start` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `ban_until` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `ban_type` tinyint(1) NOT NULL DEFAULT 1,

@@ -52,13 +52,6 @@ $config = array (
 	'p_logic' => 'usual',
 	
 	'smtp'		=> false,
-	
-/* action limiter */
-
-	'action_log'	=> false,	// log connect with BD times and detect some fast users, possible bots
-	'action_max'	=> 10,		// maximum exec php script's times ( server monitorings, page refresh, profile edit and etc.)
-	'action_time'	=> 1,		// per seconds. 
-	'action_ban'	=> 60,		// ban time in seconds
 );
   
 $site_ways = array (

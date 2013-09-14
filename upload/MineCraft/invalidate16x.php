@@ -26,7 +26,7 @@ function generateSessionId() {
 }
 
 function logExit($text, $output = "Bad login") {
-    vtxtlog($text);
+    mcrSys::log($text);
     exit($output);
 }
 
@@ -39,8 +39,8 @@ if (($_SERVER['REQUEST_METHOD'] == 'POST' ) && (stripos($_SERVER["CONTENT_TYPE"]
 if (empty($json->accessToken) or empty($json->clientToken))
     logExit("[invalidate16x.php] invalidate process [Empty input] [ " . ((empty($json->accessToken)) ? 'Session ' : '') . ((empty($json->clientToken)) ? 'clientToken ' : '') . "]");
 
-loadTool('user.class.php');
-BDConnect('auth');
+mcrSys::loadTool('user.class.php');
+mcrDB::connect('auth');
 
 $sessionid = $json->accessToken;
 $clientToken = $json->clientToken;
@@ -48,20 +48,20 @@ $clientToken = $json->clientToken;
 if (!preg_match("/^[a-f0-9-]+$/", $sessionid) or
         !preg_match("/^[a-f0-9-]+$/", $clientToken))
     logExit("[invalidate16x.php] login process [Bad symbols] Session [$sessionid] clientToken [$clientToken]");
-$result = BD("SELECT `{$bd_users['email']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['session']}`='" . TextBase::SQLSafe($sessionid) . "' AND `{$bd_users['clientToken']}`='" . TextBase::SQLSafe($clientToken) . "'");
+$result = BD("SELECT `{$bd_users['email']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['session']}`='" . mcrDB::safe($sessionid) . "' AND `{$bd_users['clientToken']}`='" . mcrDB::safe($clientToken) . "'");
 
-if (mysql_num_rows($result) != 1)
+if ($result->num_rows != 1)
     logExit("[invalidate16x.php] invalidate process, wrong accessToken/clientToken pair");
 
-$line = mysql_fetch_array($result, MYSQL_NUM);
+$line = $result->fetch_array( MYSQL_NUM);
 $login = $line[0];
 
 $auth_user = new User($login, $bd_users['email']);
 
-BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['session']}`='' WHERE `{$bd_users['email']}`='" . TextBase::SQLSafe($login) . "'");
+BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['session']}`='' WHERE `{$bd_users['email']}`='" . mcrDB::safe($login) . "'");
 
 
-vtxtlog("[invalidate16x.php] refresh process [Success] User [$login] Invalidate Session [$sessionid] clientToken[$clientToken]");
+mcrSys::log("[invalidate16x.php] refresh process [Success] User [$login] Invalidate Session [$sessionid] clientToken[$clientToken]");
 
 exit();
 ?>

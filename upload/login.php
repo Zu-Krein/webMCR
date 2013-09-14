@@ -3,14 +3,14 @@ if (empty($_GET['out']) and empty($_POST['login'])) exit;
 
 require('./system.php');
 
-loadTool('ajax.php');
-loadTool('user.class.php');
+mcrSys::loadTool('ajax.php');
+mcrSys::loadTool('user.class.php');
 
-BDConnect('login');
+mcrDB::connect('login');
 
 if (isset($_GET['out'])) {
 
-	header("Location: ".BASE_URL);	
+	header("Location: " . BASE_URL);	
 	MCRAuth::userLoad();  	
 	if (!empty($user)) $user->logout();	
 	
@@ -34,7 +34,7 @@ if (isset($_GET['out'])) {
 	
 	if ($tmp_user->lvl() <= 0) aExit(4, lng('USER_BANNED'));	
 	
-	$tmp_user->login(randString( 15 ), GetRealIp(), (!empty($_POST['save']))? true : false);
+	$tmp_user->login(randString( 15 ), mcrSys::getIP(), (!empty($_POST['save']))? true : false);
 	aExit(0, 'success');	  
 }
 ?>

@@ -7,7 +7,7 @@ global $uInfo, $config;
 	$skin = GetVisual('skin');
 	if ($skin === false and $uInfo['name'] !== false ) return; // user not exists - all users have default skin in skins dir
 	
-	loadTool('skin.class.php');	
+	mcrSys::loadTool('skin.class.php');	
 	$dir = MCRAFT . ( ( $uInfo['female'] == -1 and $uInfo['name'] ) ? 'tmp/skin_buffer/' : 'tmp/skin_buffer/default/' );
 	$buffer = $dir.($uInfo['name'] ? $uInfo['name'] : 'Char').($uInfo['mini'] ? '_Mini' : '').($uInfo['female'] == 1 ? '_female' : '').'.png';
 
@@ -37,7 +37,7 @@ $uInfo = array (	'mini'		=> (isset($_GET['mini']) or isset($_GET['m'])) ? true :
 
 if ( $uInfo['id'] ) {
 
-	BDConnect('skin_viewer'); loadTool('user.class.php');	
+	mcrDB::connect('skin_viewer'); mcrSys::loadTool('user.class.php');	
 	$tmp_user = new User($uInfo['id'], $bd_users['id']) ;
 	if ( !$tmp_user->id() ) exit; 
 

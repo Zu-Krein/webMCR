@@ -18,7 +18,7 @@ if (!empty($user)) {
 
 $content_side .= ob_get_clean();
 
-loadTool('monitoring.class.php');
+mcrSys::loadTool('monitoring.class.php');
 
 $servManager = new ServerManager();
 $content_servers = $servManager->Show('side');

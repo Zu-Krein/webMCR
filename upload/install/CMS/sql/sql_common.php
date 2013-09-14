@@ -16,6 +16,14 @@ BD("DROP TABLE IF EXISTS `{$bd_names['ip_banning']}`,
                          `{$bd_names['servers']}`;");
 }
 
+/* 2.3 UPDATE */ 
+
+if (mcrDB::getFieldType($bd_names['ip_banning'], 'IP') == 'varchar(16)') {
+
+	BD("DROP TABLE IF EXISTS `{$bd_names['action_log']}`;");
+	BD("DROP TABLE IF EXISTS `{$bd_names['ip_banning']}`;");
+}
+
 /* CREATE TABLES */
 	
 BD("CREATE TABLE IF NOT EXISTS `{$bd_names['likes']}` (
@@ -118,7 +126,7 @@ BD("CREATE TABLE IF NOT EXISTS `{$bd_names['comments']}` (
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;");
 
 BD("CREATE TABLE IF NOT EXISTS `{$bd_names['ip_banning']}` (
-  `IP` varchar(16) NOT NULL,
+  `IP` binary(".$IP_size.") NOT NULL,
   `time_start` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `ban_until` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `ban_type` tinyint(1) NOT NULL DEFAULT 1,
@@ -158,9 +166,19 @@ BD("INSERT INTO `{$bd_names['data']}` (`property`, `value`) VALUES
 ('email-name', 'Info'),
 ('email-mail', 'noreplay@noreplay.ru');");
 
+BD("CREATE TABLE IF NOT EXISTS `{$bd_names['action_log']}` (
+  `IP` binary(".$IP_size.") NOT NULL,
+  `first_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `last_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `user_id` bigint(20) NOT NULL,
+  `query_count` int(10) NOT NULL DEFAULT 1,
+  `info` text DEFAULT NULL,
+  PRIMARY KEY (`IP`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
 /* 2.05 UPDATE */
 
-if (!BD_ColumnExist($bd_names['ip_banning'], 'ban_type'))
+if (!mcrDB::columnExist($bd_names['ip_banning'], 'ban_type'))
 
 BD("ALTER TABLE `{$bd_names['ip_banning']}` 
 	ADD `ban_type` tinyint(1) NOT NULL DEFAULT 1,
@@ -168,7 +186,7 @@ BD("ALTER TABLE `{$bd_names['ip_banning']}`
 	
 /* 2.1 UPDATE */
 
-if (!BD_ColumnExist($bd_names['news'], 'user_id')) {
+if (!mcrDB::columnExist($bd_names['news'], 'user_id')) {
 
 BD("ALTER TABLE `{$bd_names['news']}` 
 	ADD `user_id` bigint(20) NOT NULL,
@@ -185,34 +203,39 @@ BD("ALTER TABLE `{$bd_names['users']}`	ADD	KEY `group_id` (`{$bd_users['group']}
 }	
 
 /* 2.15 UPDATE */
-if (!BD_ColumnExist($bd_names['users'], $bd_users['deadtry'])) {
+if (!mcrDB::columnExist($bd_names['users'], $bd_users['deadtry'])) {
 
 BD("ALTER TABLE `{$bd_names['users']}`	ADD `{$bd_users['deadtry']}` tinyint(1) DEFAULT 0;");	
 }
 
 /* 2.25b UPDATE */
-if (!BD_ColumnExist($bd_names['users'], $bd_users['clientToken'])) {
+if (!mcrDB::columnExist($bd_names['users'], $bd_users['clientToken'])) {
 
 BD("ALTER TABLE `{$bd_names['users']}` ADD `{$bd_users['clientToken']}` varchar(255) DEFAULT NULL;");	
 }
 
 /* 2.3 UPDATE */
-if (!BD_ColumnExist($bd_names['servers'], 'service_user')) {
+if (!mcrDB::columnExist($bd_names['servers'], 'service_user')) {
 
-BD("ALTER TABLE `{$bd_names['servers']}` ADD `service_user` char(64) default NULL;");
+BD("ALTER TABLE `{$bd_names['servers']}` ADD `service_user` char(64) DEFAULT NULL;");
 BD("ALTER TABLE `{$bd_names['news']}` ADD `hits` int(10) DEFAULT 0;");	
 }
 
-if (!BD_ColumnExist($bd_names['news'], 'hide_vote'))
+if (!mcrDB::columnExist($bd_names['news'], 'hide_vote'))
 
 BD("ALTER TABLE `{$bd_names['news']}` ADD `hide_vote` tinyint(1) NOT NULL DEFAULT 0;");	
 
+if (mcrDB::getFieldType($bd_names['users'], $bd_users['ip']) == 'varchar(16)') {
 
-BD("CREATE TABLE IF NOT EXISTS `{$bd_names['action_log']}` (
-  `IP` varchar(16) NOT NULL,
-  `first_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `last_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `query_count` int(10) NOT NULL DEFAULT 1,
-  `info` varchar(255) NOT NULL,
-  PRIMARY KEY (`IP`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+	BD("ALTER TABLE `{$bd_names['users']}` DROP `{$bd_users['ip']}`;");
+	BD("ALTER TABLE `{$bd_names['users']}` ADD `{$bd_users['ip']}` binary(".$IP_size.") NOT NULL;");
+}
+
+/* Always refresh IP column length for turn On \ Off IPv6 mode */
+
+if (mcrDB::getFieldType($bd_names['users'], $bd_users['ip']) != 'binary('.$IP_size.')') {
+
+	BD("ALTER TABLE `{$bd_names['users']}` MODIFY COLUMN `{$bd_users['ip']}` binary(".$IP_size.")");
+	BD("ALTER TABLE `{$bd_names['action_log']}` MODIFY COLUMN `IP` binary(".$IP_size.")");
+	BD("ALTER TABLE `{$bd_names['ip_banning']}` MODIFY COLUMN `IP` binary(".$IP_size.")");
+}

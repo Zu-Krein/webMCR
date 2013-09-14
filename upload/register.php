@@ -22,15 +22,15 @@ if (!$method) exit;
 
 require('./system.php');
 
-loadTool('ajax.php');
+mcrSys::loadTool('ajax.php');
 
 if (	$config['p_logic'] != 'usual' 
 	and $config['p_logic'] != 'xauth'
 	and $config['p_logic'] != 'authme') aExit(1,'Registration is blocked. Used auth script from main CMS');
 
-BDConnect('register');
+mcrDB::connect('register');
 
-loadTool('user.class.php');
+mcrSys::loadTool('user.class.php');
 $rcodes  = array();  
 
 function tryExit() {
@@ -72,7 +72,7 @@ if ($method == 2) {
 	exit(View::ShowStaticPage('mail_verification_ok.html', 'other/'));
 }
 
-RefreshBans();
+mcrSys::refreshBans();
 	
 $login  = $_POST['login'];
 $pass   = $_POST['pass'];
@@ -81,7 +81,7 @@ $repass = $_POST['repass'];
 $female = (!(int)$_POST['female'])? 0 : 1;
 $email  = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL); 
 	
-if (!CanAccess()) aExit(11, lng('IP_BANNED'));
+if (!mcrSys::isBanned()) aExit(11, lng('IP_BANNED'));
 	
 if (empty($login) || empty($pass) || empty($repass) || empty($_POST['email'])) aExit(1, lng('INCOMPLETE_FORM'));
     
@@ -92,13 +92,13 @@ if (empty($login) || empty($pass) || empty($repass) || empty($_POST['email'])) a
 
     tryExit();
 	
-    $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE `{$bd_users['login']}`='".TextBase::SQLSafe($login)."'");
-	$line   = mysql_fetch_array($result, MYSQL_NUM );
+    $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE `{$bd_users['login']}`='".mcrDB::safe($login)."'");
+	$line   = $result->fetch_array( MYSQL_NUM );
 	
 	if ($line[0]) aExit(5, lng('AUTH_EXIST_LOGIN'));
 	
-    $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE `{$bd_users['email']}`='".TextBase::SQLSafe($email)."'");
-	$line   = mysql_fetch_array($result, MYSQL_NUM );	
+    $result = BD("SELECT COUNT(*) FROM `{$bd_names['users']}` WHERE `{$bd_users['email']}`='".mcrDB::safe($email)."'");
+	$line   = $result->fetch_array( MYSQL_NUM );	
 	
 	if ($line[0]) aExit(15, lng('AUTH_EXIST_EMAIL'));
 
@@ -115,16 +115,16 @@ if (empty($login) || empty($pass) || empty($repass) || empty($_POST['email'])) a
 	if ($verification) $group = 4;
 	else $group = 1;
 	
-	if (!BD("INSERT INTO `{$bd_names['users']}` (`{$bd_users['login']}`,`{$bd_users['password']}`,`{$bd_users['ip']}`,`{$bd_users['female']}`,`{$bd_users['ctime']}`,`{$bd_users['group']}`) VALUES('".TextBase::SQLSafe($login)."','".MCRAuth::createPass($pass)."','".TextBase::SQLSafe(GetRealIp())."',$female,NOW(),'$group')"))
+	if (!BD("INSERT INTO `{$bd_names['users']}` (`{$bd_users['login']}`,`{$bd_users['password']}`,`{$bd_users['ip']}`,`{$bd_users['female']}`,`{$bd_users['ctime']}`,`{$bd_users['group']}`) VALUES('".mcrDB::safe($login)."','".MCRAuth::createPass($pass)."','".mcrDB::safe(mcrSys::getIP())."',$female,NOW(),'$group')"))
 	  aExit(14);
 
-	$tmp_user = new User(mysql_insert_id(), $bd_users['id']);
+	$tmp_user = new User(mcrDB::lastID(), $bd_users['id']);
 	$tmp_user->setDefaultSkin();	
 
     $next_reg = (int) sqlConfigGet('next-reg-time');	
 	 
 	if ($next_reg  > 0) 
-	BD("INSERT INTO `{$bd_names['ip_banning']}` (`IP`,`time_start`,`ban_until`) VALUES ('".TextBase::SQLSafe($_SERVER['REMOTE_ADDR'])."',NOW(),NOW()+INTERVAL $next_reg HOUR)");
+	BD("INSERT INTO `{$bd_names['ip_banning']}` (`IP`,`time_start`,`ban_until`) VALUES ('".mcrDB::safe($_SERVER['REMOTE_ADDR'])."',NOW(),NOW()+INTERVAL $next_reg HOUR)");
 	
 	if (!$verification)
 		aExit(0, lng('REG_COMPLETE') . '. <a href="#" class="btn" onclick="Login();">'.lng('ENTER').'</a>');						   			    

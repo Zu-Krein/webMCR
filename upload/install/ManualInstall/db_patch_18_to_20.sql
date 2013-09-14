@@ -20,6 +20,11 @@ ALTER TABLE `accounts` ADD `default_skin` tinyint(1) NOT NULL DEFAULT '2';
 ALTER TABLE `accounts` ADD `clientToken` varchar(255) default NULL;
 
 ALTER TABLE `accounts` DROP `lvl`;
+ALTER TABLE `accounts` DROP `ip`;
+ALTER TABLE `accounts` ADD `ip` binary(16) NOT NULL;
+
+ALTER TABLE `ip_banning` DROP `IP`;
+ALTER TABLE `ip_banning` ADD `IP` binary(16) NOT NULL;
 
 ALTER TABLE `ip_banning` ADD `ban_type` tinyint(1) NOT NULL DEFAULT 1;
 ALTER TABLE `ip_banning` ADD `reason` varchar(255) DEFAULT NULL;
@@ -62,11 +67,12 @@ CREATE TABLE IF NOT EXISTS `likes` (
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0;
 
 CREATE TABLE IF NOT EXISTS `action_log` (
-  `IP` varchar(16) NOT NULL,
+  `IP` binary(16) NOT NULL,
   `first_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `last_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `query_count` int(10) NOT NULL DEFAULT 1,
-  `info` varchar(255) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `info` text DEFAULT NULL,
   PRIMARY KEY (`IP`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

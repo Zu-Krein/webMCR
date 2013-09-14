@@ -45,11 +45,11 @@ public static function createPass($password) {
 public static function checkPass($data) { 
 global $bd_names, $bd_users;
 	
-	 $result = BD("SELECT `{$bd_users['salt_pwd']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['id']}`='".TextBase::SQLSafe($data['user_id'])."'"); 
+	 $result = BD("SELECT `{$bd_users['salt_pwd']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['id']}`='".mcrDB::safe($data['user_id'])."'"); 
 
-	 if ( !$result or !mysql_num_rows( $result ) ) return false;
+	 if ( !$result or !$result->num_rows ) return false;
 	 
-	 $line = mysql_fetch_array( $result, MYSQL_NUM);
+	 $line = $result->fetch_array( MYSQL_NUM);
 	 
 	if ($data['pass_db'] == md5(md5($line[0]).md5($data['pass']))) return true;
 	else return false;

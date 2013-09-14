@@ -23,7 +23,7 @@ BD($bd_alter_users."ADD `{$bd_users['clientToken']}` varchar(255) DEFAULT NULL;"
 BD($bd_alter_users."ADD `{$bd_users['server']}` varchar(255) DEFAULT NULL;");
 BD($bd_alter_users."ADD `{$bd_users['password']}` char(32) DEFAULT NULL;");
 BD($bd_alter_users."ADD `{$bd_users['tmp']}` char(32) NOT NULL DEFAULT '0';");
-BD($bd_alter_users."ADD `{$bd_users['ip']}` varchar(16) DEFAULT NULL;");
+BD($bd_alter_users."ADD `{$bd_users['ip']}` binary(16) DEFAULT NULL;");
 BD($bd_alter_users."ADD `{$bd_users['group']}` int(10) NOT NULL DEFAULT 1;");
 BD($bd_alter_users."ADD `comments_num` int(10) NOT NULL DEFAULT 0;");
 BD($bd_alter_users."ADD `gameplay_last` datetime NOT NULL DEFAULT '0000-00-00 00:00:00';");

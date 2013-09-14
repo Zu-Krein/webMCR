@@ -3,9 +3,9 @@ if (!defined('MCR')) exit;
  
 if (empty($user) or $user->lvl() < 15) { header("Location: ".BASE_URL); exit; }
 
-loadTool('catalog.class.php');
-loadTool('alist.class.php');
-loadTool('monitoring.class.php');
+mcrSys::loadTool('catalog.class.php');
+mcrSys::loadTool('alist.class.php');
+mcrSys::loadTool('monitoring.class.php');
 
 $menu->SetItemActive('admin');
 
@@ -62,7 +62,7 @@ if ($do) {
 	break;
 	case 'filelist':
 
-	loadTool('upload.class.php');	
+	mcrSys::loadTool('upload.class.php');	
 	
 	$url = 'index.php?mode=control&do=filelist';
 	if ($user_id) $url .= '&user_id='.$user_id;
@@ -93,7 +93,7 @@ if ($do) {
 	for($i = $first;$i<=$last;$i++)
 		if(@$file[$i]) $html .= $file[$i].'<br>';	
 	
-	$arrGen = new Manager();
+	$arrGen = new View();
 	$html .= $arrGen->arrowsGenerator('index.php?mode=control&do=log&', $curlist, $count, $max);
 	
 	break;
@@ -110,13 +110,9 @@ if ($do) {
 
 	$html .= View::ShowStaticPage('user_find.html', $st_subdir.'user/');
 	
-	if ( !empty($_GET["sby"]) and 
-	     !empty($_GET['input'])     and 
-		( preg_match("/^[a-zA-Z0-9_-]+$/", $_GET['input']) or 
-		  preg_match("/[0-9.]+$/", $_GET['input'])         or 
-		  preg_match("/[0-9]+$/", $_GET['input']) )) {
+	if ( !empty($_GET['sby']) and !empty($_GET['input']) ) {
 		  
-	$search_by = $_GET["sby"];
+	$search_by = $_GET['sby'];
 	$input     = $_GET['input'];
  
     $controlManager = new ControlManager(false, 'index.php?mode=control&do=search&sby='.$search_by.'&input='.$input.'&');
@@ -148,7 +144,7 @@ if ($do) {
 		
 		$new_file_info = POSTSafeMove(($female)? 'def_skin_female' : 'def_skin_male', $tmp_dir);
 		
-		loadTool('skin.class.php');
+		mcrSys::loadTool('skin.class.php');
 		
 		if ($new_file_info and skinGenerator2D::isValidSkin($tmp_dir.$new_file_info['tmp_name']) and rename( $tmp_dir.$new_file_info['tmp_name'], $default_skin)) {
 		
@@ -207,10 +203,10 @@ if ($do) {
 	$ban_type	= (isset($_POST['banip_all']))? 2 : 1;
 	$ban_user_t	= (isset($_POST['banip_anduser']) and (int)$_POST['banip_anduser'])? true : false;
 		
-		BD("DELETE FROM {$bd_names['ip_banning']} WHERE IP='".TextBase::SQLSafe($ban_user->ip())."'");	
-		BD("INSERT INTO {$bd_names['ip_banning']} (IP, time_start, ban_until, ban_type) VALUES ('".TextBase::SQLSafe($ban_user->ip())."', NOW(), NOW()+INTERVAL ".TextBase::SQLSafe($ban_time)." DAY, '".$ban_type."')");
+		BD("DELETE FROM {$bd_names['ip_banning']} WHERE IP='".mcrDB::safe($ban_user->ip())."'");	
+		BD("INSERT INTO {$bd_names['ip_banning']} (IP, time_start, ban_until, ban_type) VALUES ('".mcrDB::safe($ban_user->ip())."', NOW(), NOW()+INTERVAL ".mcrDB::safe($ban_time)." DAY, '".$ban_type."')");
 		
-		$info .= lng('ADMIN_BAN_IP').' (IP '.$ban_user->ip().') <br/>';
+		$info .= lng('ADMIN_BAN_IP').' (IP '.mcrSys::trueIP($ban_user->ip()).') <br/>';
 		
 		if ($ban_user_t) {
 			
@@ -515,18 +511,18 @@ if ($do) {
 			}
 
 		$info .= lng('UPLOAD_FAIL').'<br>'; 
-		vtxtlog($t_error);
+		mcrSys::log($t_error);
 			
 		} else {
 		
-			loadTool('ajax.php'); 
+			mcrSys::loadTool('ajax.php'); 
 			$config['s_theme']	= $result['id']	;		
 		}
 	}	
 	
 	if ($theme_id === $theme_delete) ThemeManager::DeleteTheme($theme_delete);
 	
-	if ($theme_old != $config['s_theme']) loadTool('ajax.php'); // headers for prompt refresh cookies  
+	if ($theme_old != $config['s_theme']) mcrSys::loadTool('ajax.php'); // headers for prompt refresh cookies  
 	
 	$config['s_name']		= $site_name	;
 	$config['s_about']		= $site_about	; 	
@@ -579,7 +575,7 @@ if ($do) {
       	
 		$skin_def = $ban_user->defaultSkinTrigger();
 		$cloak_exist = file_exists($ban_user->getCloakFName()); 
-		$ban_user_img_get = $ban_user->getSkinLink().'&amp;refresh='.rand(1000, 9999);
+		$user_img_get = $ban_user->getSkinLink().'&amp;refresh='.rand(1000, 9999);
 		
         if ($cloak_exist or !$skin_def)  include View::Get('profile_skin.html', $st_subdir.'profile/');
         if (!$skin_def )                 include View::Get('profile_del_skin.html', $st_subdir.'profile/');  
@@ -590,12 +586,11 @@ if ($do) {
     }
     break;
     case 'delete_banip': 
-	if (!empty($_GET['ip']) and preg_match("/[0-9.]+$/", $_GET['ip'])) {
+	if (empty($_GET['ip'])) break;
 	
-	$ip = $_GET['ip']; BD("DELETE FROM {$bd_names['ip_banning']} WHERE IP='".TextBase::SQLSafe($ip)."'");
-		                  
+	$ip = $_GET['ip']; BD("DELETE FROM {$bd_names['ip_banning']} WHERE IP='".mcrDB::safe(mcrSys::binIP($ip))."'");		                  
     $info .= lng('IP_UNBANNED') . ' ( '.$ip.') ';
-	} 
+	
     break;
   }
 

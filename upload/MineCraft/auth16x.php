@@ -8,7 +8,7 @@ function generateSessionId() {
 }
 
 function logExit($text, $output = "Bad login") {
-  vtxtlog($text); exit($output);
+  mcrSys::log($text); exit($output);
 }
 
 
@@ -23,8 +23,8 @@ if ( empty($json->username) or empty($json->password) or empty($json->clientToke
 
 	logExit("[auth16x.php] login process [Empty input] [ ".((empty($json->username))? 'LOGIN ':'').((empty($json->password))? 'PASSWORD ':'').((empty($json->clientToken))? 'clientToken ':'')."]");
 
-	loadTool('user.class.php'); 
-	BDConnect('auth');
+	mcrSys::loadTool('user.class.php'); 
+	mcrDB::connect('auth');
 
 $login = $json->username; $password = $json->password; $clientToken = $json->clientToken;
 
@@ -41,10 +41,10 @@ if (!preg_match("/^[a-zA-Z0-9_-]+$/", $password)  or
 	if ( !$auth_user->authenticate($password) ) logExit("[auth16.php] login process [Wrong password] User [$login] Password [$password]");
 
     $sessid = generateSessionId();
-    BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['session']}`='".TextBase::SQLSafe($sessid)."' WHERE `{$BD_Field}`='".TextBase::SQLSafe($login)."'");
-    BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['clientToken']}`='".TextBase::SQLSafe($clientToken)."' WHERE `{$BD_Field}`='".TextBase::SQLSafe($login)."'");
+    BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['session']}`='".mcrDB::safe($sessid)."' WHERE `{$BD_Field}`='".mcrDB::safe($login)."'");
+    BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['clientToken']}`='".mcrDB::safe($clientToken)."' WHERE `{$BD_Field}`='".mcrDB::safe($login)."'");
 
-	vtxtlog("[auth16.php] login process [Success] User [$login] Session [$sessid] clientToken[$clientToken]");			
+	mcrSys::log("[auth16.php] login process [Success] User [$login] Session [$sessid] clientToken[$clientToken]");			
 	
         $profile = array ( 'id' => $auth_user->id(), 'name' => $auth_user->name() ) ;
         

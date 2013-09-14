@@ -15,11 +15,11 @@ switch ($method) {
 	case 'delete_file':	
 	
 	require('./system.php');
-	loadTool('ajax.php');	
-	loadTool('user.class.php');
+	mcrSys::loadTool('ajax.php');	
+	mcrSys::loadTool('user.class.php');
 	
-		if ($method == 'upload' or $method == 'delete_file')	loadTool('upload.class.php');
-	elseif ($method == 'profile')								loadTool('skin.class.php');
+		if ($method == 'upload' or $method == 'delete_file')	mcrSys::loadTool('upload.class.php');
+	elseif ($method == 'profile')								mcrSys::loadTool('skin.class.php');
 	elseif ($method == 'restore' and 
 			$config['p_logic'] != 'usual' and 
 			$config['p_logic'] != 'xauth' and
@@ -27,16 +27,16 @@ switch ($method) {
 			
 				aExit(1,'Change password is not available');
 	
-	BDConnect('action_'.$method);
-	MCRAuth::userLoad();
+	mcrDB::connect(); 
+	MCRAuth::userLoad('a_' . $method);
 	
     break;
 	case 'download':
 	
 	require('./system.php');
-	loadTool('upload.class.php');
+	mcrSys::loadTool('upload.class.php');
 	
-	BDConnect('action_download');
+	mcrDB::connect('a_' . $method );
 	
 	break;
 	default: exit; break;
@@ -92,13 +92,13 @@ switch ($method) {
 		
 		if ($type == ItemType::News) {
 		
-			loadTool('catalog.class.php');
+			mcrSys::loadTool('catalog.class.php');
 			
 			$item = new News_Item($id);
 			
 		} elseif ($type == ItemType::Skin and file_exists(MCR_ROOT.'instruments/skinposer.class.php')) {
 
-			loadTool('skinposer.class.php');
+			mcrSys::loadTool('skinposer.class.php');
 			
 			$item = new SPItem($id);
 		}
@@ -128,10 +128,10 @@ switch ($method) {
 
         $email = $_POST['email'];  
 	    
-		$result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['email']}`='".TextBase::SQLSafe($email)."'"); 
-		if ( !mysql_num_rows($result) ) aExit(3, lng('RESTORE_NOT_EXIST'));
+		$result = BD("SELECT `{$bd_users['id']}` FROM `{$bd_names['users']}` WHERE `{$bd_users['email']}`='".mcrDB::safe($email)."'"); 
+		if ( !$result->num_rows ) aExit(3, lng('RESTORE_NOT_EXIST'));
 		
-		$line = mysql_fetch_array( $result, MYSQL_NUM );
+		$line = $result->fetch_array( MYSQL_NUM );
         
 		$restore_user = new User($line[0],$bd_users['id']);		
 	     
@@ -155,7 +155,7 @@ switch ($method) {
 
 	    CaptchaCheck(3); 
 			
-	    loadTool('catalog.class.php');
+	    mcrSys::loadTool('catalog.class.php');
 				
 		$comments_item = new Comments_Item(false, 'news/');				
 		$rcode = $comments_item->Create($_POST['comment'],(int)$_POST['item_id']);
@@ -174,7 +174,7 @@ switch ($method) {
 
 		if (empty($user) or empty($_POST['item_id'])) aExit(1);		
 		
-		loadTool('catalog.class.php');
+		mcrSys::loadTool('catalog.class.php');
 			
 		$comments_item = new Comments_Item((int)$_POST['item_id']);
 		

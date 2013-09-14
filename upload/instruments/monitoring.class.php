@@ -29,10 +29,10 @@ private $s_user;
 		
 	    $this->id = (int)$id; if (!$this->id) return false;
 		
-		$result = BD("SELECT online, address, port, name, numpl, service_user, slots, info, refresh_time, method, rcon FROM `".$this->db."` WHERE id='".TextBase::SQLSafe($this->id)."'");
-		if ( mysql_num_rows( $result ) != 1 ) { $this->id = false; return false; }
+		$result = BD("SELECT online, address, port, name, numpl, service_user, slots, info, refresh_time, method, rcon FROM `".$this->db."` WHERE id='".mcrDB::safe($this->id)."'");
+		if ( $result->num_rows != 1 ) { $this->id = false; return false; }
 			
-		$line = mysql_fetch_array($result, MYSQL_ASSOC);
+		$line = $result->fetch_array( MYSQL_ASSOC);
 
 		$this->address = $line['address'];
 		$this->port    = (int)$line['port'];
@@ -69,9 +69,9 @@ private $s_user;
 		$port = (int) $port;
 		if (!$port) $port = 25565;
 
-		if ( BD("insert into `".$this->db."` ( address, port, info, name, method, service_user, rcon ) values ('".TextBase::SQLSafe($address)."', '".TextBase::SQLSafe($port)."', '".TextBase::SQLSafe($info)."' , '".TextBase::SQLSafe($name)."', '".TextBase::SQLSafe($method)."', '".TextBase::SQLSafe($s_user)."', '".TextBase::SQLSafe($rcon)."' )") ) 
+		if ( BD("insert into `".$this->db."` ( address, port, info, name, method, service_user, rcon ) values ('".mcrDB::safe($address)."', '".mcrDB::safe($port)."', '".mcrDB::safe($info)."' , '".mcrDB::safe($name)."', '".mcrDB::safe($method)."', '".mcrDB::safe($s_user)."', '".mcrDB::safe($rcon)."' )") ) 
           
-		  $this->id = mysql_insert_id();
+		  $this->id = mcrDB::lastID();
 		  
 		else return 4;
 		
@@ -96,7 +96,7 @@ private $s_user;
 	if (!$rcon and ( $method == 2 or $method == 3)) return false;
 	if (!$s_user and $method == 3 ) return false;
 		
-	BD("UPDATE `".$this->db."` SET `method`='".TextBase::SQLSafe($method)."',`rcon`='".TextBase::SQLSafe($rcon)."',`service_user`='".TextBase::SQLSafe($s_user)."' WHERE `id`='".$this->id."'"); 	
+	BD("UPDATE `".$this->db."` SET `method`='".mcrDB::safe($method)."',`rcon`='".mcrDB::safe($rcon)."',`service_user`='".mcrDB::safe($s_user)."' WHERE `id`='".$this->id."'"); 	
 	
 	$this->method = $method;
 	$this->rcon   = $rcon;
@@ -111,7 +111,7 @@ private $s_user;
 	$port = (int) $port;
 	if (!$port) $port = 25565;	
 	
-	BD("UPDATE `".$this->db."` SET `address`='".TextBase::SQLSafe($address)."',`port`='".TextBase::SQLSafe($port)."' WHERE `id`='".$this->id."'"); 
+	BD("UPDATE `".$this->db."` SET `address`='".mcrDB::safe($address)."',`port`='".mcrDB::safe($port)."' WHERE `id`='".$this->id."'"); 
 	
 	$this->address = $address;
 	$this->port    = $port;
@@ -125,7 +125,7 @@ private $s_user;
 	
 	if (!$var or !TextBase::StringLen($var)) return false;
 	
-	BD("UPDATE `".$this->db."` SET `".TextBase::SQLSafe($field)."`='".TextBase::SQLSafe($var)."' WHERE `id`='".$this->id."'"); 
+	BD("UPDATE `".$this->db."` SET `".mcrDB::safe($field)."`='".mcrDB::safe($var)."' WHERE `id`='".$this->id."'"); 
 	
 	if ($field == 'name') $this->name = $var;
 	else  $this->info = $var;
@@ -135,9 +135,9 @@ private $s_user;
 
 	if (!$this->Exist()) return false;
 	
-		$result = BD("SELECT last_update FROM `".$this->db."` WHERE id='".$this->id."' AND last_update<NOW()-INTERVAL ".TextBase::SQLSafe($this->refresh)." MINUTE"); 
+		$result = BD("SELECT last_update FROM `".$this->db."` WHERE id='".$this->id."' AND last_update<NOW()-INTERVAL ".mcrDB::safe($this->refresh)." MINUTE"); 
 
-	    if ( mysql_num_rows( $result ) == 1 ) return true;
+	    if ( $result->num_rows == 1 ) return true;
 		else return false;
 		
 	}
@@ -162,7 +162,7 @@ private $s_user;
            
         case 2:
             
-		loadTool('rcon.class.php');
+		mcrSys::loadTool('rcon.class.php');
 		
 		try	{
 		
@@ -187,7 +187,7 @@ private $s_user;
         break;
         case 3:        
 
-		loadTool('json_api.php', 'bukkit/');
+		mcrSys::loadTool('json_api.php', 'bukkit/');
 
 		$salt = sqlConfigGet('json-verification-salt');
 	
@@ -197,7 +197,7 @@ private $s_user;
 			sqlConfigSet('json-verification-salt', $salt); 	
 		}
 		
-			if (!extension_loaded("cURL")) { vtxtlog('[monitoring.class.php] cURL module is required'); return; }
+			if (!extension_loaded("cURL")) { mcrSys::log('[monitoring.class.php] cURL module is required'); return; }
 		
             $api = new JSONAPI($this->address, $this->port, $this->s_user, $this->rcon, $salt); // ToDo rewrite / delete . curl is custom module
                 
@@ -216,7 +216,7 @@ private $s_user;
 	
         default :
 	
-		loadTool('query.function.php');
+		mcrSys::loadTool('query.function.php');
 		 
 		$full_state = ($this->method == 1)? mcraftQuery($this->address, $this->port ) : mcraftQuery_SE($this->address, $this->port );		 
 		if (empty($full_state) or isset($full_state['too_many'])) {
@@ -253,9 +253,9 @@ private $s_user;
 	$this->numpl = $numpl;
 	
 	if (!empty($full_state))	// name='".$full_state['hostname']."'
-	  BD("UPDATE `".$this->db."` SET numpl='".TextBase::SQLSafe($numpl)."',slots='".TextBase::SQLSafe($full_state['maxplayers'])."',players='".TextBase::SQLSafe($system_users)."',online='1' WHERE id='".$this->id."'"); 		 
+	  BD("UPDATE `".$this->db."` SET numpl='".mcrDB::safe($numpl)."',slots='".mcrDB::safe($full_state['maxplayers'])."',players='".mcrDB::safe($system_users)."',online='1' WHERE id='".$this->id."'"); 		 
     else
-  	  BD("UPDATE `".$this->db."` SET numpl='".TextBase::SQLSafe($numpl)."',slots='-1',players='".TextBase::SQLSafe($system_users)."',online='1' WHERE id='".$this->id."'"); 		 
+  	  BD("UPDATE `".$this->db."` SET numpl='".mcrDB::safe($numpl)."',slots='-1',players='".mcrDB::safe($system_users)."',online='1' WHERE id='".$this->id."'"); 		 
 	
 	}	
 	
@@ -264,7 +264,7 @@ private $s_user;
 	if (!$this->Exist()) return false;
 	
 			$result = BD("SELECT players, numpl FROM `".$this->db."` WHERE id='".$this->id."'");
-			$players = mysql_fetch_array($result, MYSQL_ASSOC);
+			$players = $result->fetch_array( MYSQL_ASSOC);
 			$list    = $players['players'];
 			$numpl   = (int)$players['numpl'];
 			
@@ -295,9 +295,9 @@ private $s_user;
 		
 		$result = BD("SELECT `$param` FROM `".$this->db."` WHERE `id`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1) {
+		if ($result->num_rows == 1) {
 		
-			$line  = mysql_fetch_array($result, MYSQL_NUM );
+			$line  = $result->fetch_array( MYSQL_NUM );
 			$value = ((int)$line[0])? true : false;
 			
 			return $value;
@@ -312,7 +312,7 @@ private $s_user;
 	    $newTimeout = (int)$newTimeout;
 		if ($newTimeout < 0) $newTimeout = 0;
 		
-		BD("UPDATE `".$this->db."` SET `refresh_time`='".TextBase::SQLSafe($newTimeout)."' WHERE `id`='".$this->id."'"); 
+		BD("UPDATE `".$this->db."` SET `refresh_time`='".mcrDB::safe($newTimeout)."' WHERE `id`='".$this->id."'"); 
 		
 	$this->refresh = $newTimeout;	
    return true;		
@@ -325,7 +325,7 @@ private $s_user;
 	    $new = (int)$new;
 		if ($new < 0) $new = 0;
 		
-		BD("UPDATE `".$this->db."` SET `priority`='".TextBase::SQLSafe($new)."' WHERE `id`='".$this->id."'"); 
+		BD("UPDATE `".$this->db."` SET `priority`='".mcrDB::safe($new)."' WHERE `id`='".$this->id."'"); 
 		
 	return true;
    }  
@@ -336,9 +336,9 @@ private $s_user;
 
 		$result = BD("SELECT `priority` FROM `".$this->db."` WHERE `id`='".$this->id."'");
 		
-		if (mysql_num_rows( $result ) == 1) {
+		if ($result->num_rows == 1) {
 		
-			$line  = mysql_fetch_array($result, MYSQL_NUM );
+			$line  = $result->fetch_array( MYSQL_NUM );
 		    return (int)$line[0];
 			
 		} else return false;		
@@ -458,7 +458,7 @@ private $s_user;
    }   
 }
 
-Class ServerManager extends Manager {
+Class ServerManager extends View {
 
 	public function ServerManager($style_sd = false) { 
 	global $site_ways;
@@ -476,9 +476,9 @@ Class ServerManager extends Manager {
 		
 		$result = BD("SELECT `id` FROM `{$bd_names['servers']}` WHERE `$page`=1 ORDER BY priority DESC LIMIT 0,10"); 
 			
-		if ( mysql_num_rows( $result ) ) { 
+		if ( $result->num_rows ) { 
 
-		   while ( $line = mysql_fetch_array( $result, MYSQL_NUM ) ) {
+		   while ( $line = $result->fetch_array( MYSQL_NUM ) ) {
 					
 			$server = new Server($line[0], $this->st_subdir);
 			if ($update) $server->UpdateState();

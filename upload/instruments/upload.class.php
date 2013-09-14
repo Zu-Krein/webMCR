@@ -46,15 +46,15 @@ private $downloads;
 			$search_by = 'id_word';
 		}		
 		
-		$result = BD("SELECT `id`, `user_id`, `id_word`, `way`, `name`, `size`, `hash`, `downloads`  FROM `{$this->db}` WHERE `$search_by`='".TextBase::SQLSafe($search_var)."'"); 
+		$result = BD("SELECT `id`, `user_id`, `id_word`, `way`, `name`, `size`, `hash`, `downloads`  FROM `{$this->db}` WHERE `$search_by`='".mcrDB::safe($search_var)."'"); 
 		
-		if ( mysql_num_rows( $result ) != 1 ) {
+		if ( $result->num_rows != 1 ) {
 		
 			$this->id = false;
 			return false;	
 		}
 	
-	    $line = mysql_fetch_array($result, MYSQL_NUM); 
+	    $line = $result->fetch_array( MYSQL_NUM); 
 		
 		$this->id			= (int)$line[0];
         $this->user_id		= (int)$line[1];	
@@ -77,12 +77,12 @@ private $downloads;
 		$way  = $this->base_dir.$new_file_info['tmp_name'];		
 		$hash = md5_file($this->base_dir.$new_file_info['tmp_name']);
 		
-		$sql_part = ($id_word)? " OR `id_word`='".TextBase::SQLSafe($id_word)."'" : ''; 
+		$sql_part = ($id_word)? " OR `id_word`='".mcrDB::safe($id_word)."'" : ''; 
 		
 		$result = BD("SELECT `id` FROM `{$this->db}` WHERE `hash`='".$hash."'".$sql_part." "); 
-		if ( mysql_num_rows( $result ) != 0 ) {
+		if ( $result->num_rows != 0 ) {
 			
-			$line			= mysql_fetch_array( $result, MYSQL_NUM );	
+			$line			= $result->fetch_array( MYSQL_NUM );	
 			
 			$file_similar	= new File($line[0]);	
 			
@@ -119,9 +119,9 @@ private $downloads;
 			}
 		}		
 
-		if (BD("INSERT INTO {$this->db} (id_word, user_id, way, name, size, hash) VALUES ('".TextBase::SQLSafe($id_word)."', '".TextBase::SQLSafe($user_id)."','".TextBase::SQLSafe($new_file_info['tmp_name'])."','".TextBase::SQLSafe($new_file_info['name'])."', '".TextBase::SQLSafe($new_file_info['size_mb'])."', '".$hash."')")) {
+		if (BD("INSERT INTO {$this->db} (id_word, user_id, way, name, size, hash) VALUES ('".mcrDB::safe($id_word)."', '".mcrDB::safe($user_id)."','".mcrDB::safe($new_file_info['tmp_name'])."','".mcrDB::safe($new_file_info['name'])."', '".mcrDB::safe($new_file_info['size_mb'])."', '".$hash."')")) {
 		
-		$this->id			= mysql_insert_id();	
+		$this->id			= mcrDB::lastID();	
 		$this->user_id		= $user_id;
 		$this->id_word		= $id_word;
 		$this->way	   		= $way;
@@ -156,7 +156,7 @@ private $downloads;
 		case 'jpeg': $mimetype = 'image/jpeg'; $image = true; break;
 		case 'png':	$mimetype = 'image/png'; $image = true; break;
 		case 'gif': $mimetype = 'image/gif'; $image = true; break;
-		case 'zip': $mimetype = 'application/zip'; $image = true; break;
+		case 'zip': $mimetype = 'application/zip'; break;
 		case 'rar': $mimetype = 'application/x-rar-compressed'; break;
 		case 'exe': $mimetype = 'application/octet-stream'; break;
 		case 'jar': $mimetype = 'application/x-jar'; break;
@@ -167,7 +167,7 @@ private $downloads;
 	
 	$name_enc = urlencode($this->name);
 	
-		header('Content-Type:'.$mimetype.';name='.$name_enc); 
+		header('Content-Type:'.$mimetype); 
 	
 	if (!$image) {
 	
@@ -244,7 +244,7 @@ private $downloads;
 	}
 }
 
-Class FileManager extends Manager {
+Class FileManager extends View {
 private $work_skript;
 private $db;
 
@@ -254,7 +254,7 @@ private $db;
 		$this->db			= $bd_names['files'];	
 		$this->work_skript	= $work_skript;
 		
-		parent::Manager($style_sd);		
+		parent::View($style_sd);		
 	}
 	
 	public function ShowAddForm(){	
@@ -268,10 +268,10 @@ private $db;
 		if ($list <= 0) $list = 1; 
 		
 		$sql_part = '';
-		if (is_numeric($user_id)) $sql_part = " WHERE `user_id`='".TextBase::SQLSafe((int)$user_id)."'";
+		if (is_numeric($user_id)) $sql_part = " WHERE `user_id`='".mcrDB::safe((int)$user_id)."'";
 			
 		$result = BD("SELECT COUNT(*) FROM `{$this->db}`".$sql_part);
-		$line = mysql_fetch_array($result, MYSQL_NUM );
+		$line = $result->fetch_array( MYSQL_NUM );
 			  
 		$num = $line[0];	
 		
@@ -284,13 +284,13 @@ private $db;
 		}
 		
 		$result = BD("SELECT `id` FROM `{$this->db}`".$sql_part." ORDER BY `id` DESC LIMIT ".(10*($list-1)).",10");  
-		$resnum = mysql_num_rows( $result );
+		$resnum = $result->num_rows;
 		
 		
 		
 		if (!$resnum) return $html_files;		
 		
-		while ( $line = mysql_fetch_array($result, MYSQL_NUM) ) {
+		while ( $line = $result->fetch_array( MYSQL_NUM) ) {
 			
 			$file = new File($line[0], $this->st_subdir);
 			$html_files .= $file->Show();        

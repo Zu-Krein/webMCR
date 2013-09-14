@@ -59,7 +59,7 @@ public static function login($id) {
 
 	XenForo_Model_Ip::log($id, 'user', $id, 'login');
 
-    $userModel->deleteSessionActivity(0, GetRealIp());
+    $userModel->deleteSessionActivity(0, mcrSys::trueIP(mcrSys::getIP()));
 
 	$session = XenForo_Application::get('session');
     $session->changeUserId($id);
@@ -119,7 +119,7 @@ global $user, $bd_users, $config;
 			 
 			 else 
 			 
-			 $user->login(randString(15),GetRealIp());	
+			 $user->login(randString(15), mcrSys::getIP());	
 			 
 		} elseif (!empty($user)) {
 		
@@ -162,7 +162,7 @@ global $bd_names, $bd_users;
 	
 	else {
 	
-		vtxtlog ('[xenforo.php] xenForo auth class not founded');
+		mcrSys::log ('[xenforo.php] xenForo auth class not founded');
 		return false;		
 	}
 	

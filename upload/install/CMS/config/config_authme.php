@@ -6,10 +6,10 @@ $bd_users = array (
 	'login'		=> 'username',
 	'id'		=> 'id',  
 	'password' 	=> 'password',   
-	'ip' 		=> 'ip', 
 	
 /* Required MCR fields */
 
+	'ip'		=> 'mcr_ip', // CMS analog - 'ip' 
 	'deadtry' 	=> 'mcr_deadtry',
 	'email'		=> 'mcr_email',  	
 	'female'	=> 'mcr_gender',
@@ -18,7 +18,7 @@ $bd_users = array (
 	'tmp' 		=> 'mcr_tmp',
 	'session'	=> 'mcr_session',
 	'server' 	=> 'mcr_server',
-        'clientToken'   => 'mcr_clientToken'
+    'clientToken'   => 'mcr_clientToken'
 );
 
 /* Common AuthMe fields */

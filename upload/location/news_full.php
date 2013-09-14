@@ -8,7 +8,7 @@ if ( isset($_GET['id']) ) $item_id = (int) $_GET['id'];
 
 $curlist = (isset($_GET['l']))? (int) $_GET['l'] : false;
 
-loadTool('catalog.class.php');
+mcrSys::loadTool('catalog.class.php');
 
 $news_manager = new NewsManager(2, 'news/','index.php?id='.$item_id.'&amp;');    
     

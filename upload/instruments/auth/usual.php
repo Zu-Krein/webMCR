@@ -3,7 +3,7 @@
 
 Class MCRAuth {
 
-public static function userLoad() {
+public static function userLoad($log = false) {
 global $config, $user;
 
 	if ($config['p_logic'] != 'usual') 
@@ -12,13 +12,17 @@ global $config, $user;
 	
 	else self::LoadSession();
 
-	if (!empty($user)) $user->activity();
+	$user_id = (empty($user)) ? 0 : $user->id();
+	
+	if ($user_id) $user->activity();
+	
+	if ($log) mcrDB::log($log);
 }
 
 public static function LoadSession() { 
 global $user, $bd_users;
 
-	$user = false; $check_ip =  GetRealIp(); $check = true; 
+	$user = false; $check_ip =  mcrSys::getIP(); $check = true; 
 	
 	if (!class_exists('User', false)) exit('include user class first');	
 	if (!session_id() and !empty($_GET['session_id']) and preg_match('/^[a-zA-Z0-9]{26,40}$/', $_GET['session_id'])) 
@@ -29,7 +33,7 @@ global $user, $bd_users;
 
 	if (isset($_SESSION['user_name'])) 
 	
-	$user = new User($_SESSION['user_name'],$bd_users['login']);
+	$user = new User($_SESSION['user_name'], $bd_users['login']);
 
 	if (isset($_COOKIE['PRTCookie1']) and empty($user)) { 
 		
@@ -45,7 +49,7 @@ global $user, $bd_users;
 		
 		if ((!$user->id()) or
 			($user->lvl() <= 0) or
-			($check and $check_ip != $user->ip() )		
+			($check and strcmp($check_ip, $user->ip()) !== 0 )		
 			) {
 			
 			if ($user->id()) $user->logout(); 

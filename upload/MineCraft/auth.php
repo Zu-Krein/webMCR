@@ -8,15 +8,15 @@ function generateSessionId(){
 }
 
 function logExit($text, $output = "Bad login") {
-  vtxtlog($text); exit($output);
+  mcrSys::log($text); exit($output);
 }
 
 if (empty($_POST['user']) or empty($_POST['password']) or empty($_POST['version'])) 
 
 	logExit("[auth.php] login process [Empty input] [ ".((empty($_POST['user']))? 'LOGIN ':'').((empty($_POST['password']))? 'PASSWORD ':'').((empty($_POST['version']))? 'VER ':'')."]");
 
-	loadTool('user.class.php'); 
-	BDConnect('auth');
+	mcrSys::loadTool('user.class.php'); 
+	mcrDB::connect('auth');
 
 	$login = $_POST['user']; $password = $_POST['password']; $ver = $_POST['version'];
 
@@ -37,9 +37,9 @@ if ((int)sqlConfigGet('launcher-version') != (int)$ver)
 	if ( !$auth_user->authenticate($password) ) logExit("[auth.php] login process [Wrong password] User [$login] Password [$password]");
 
     $sessid = generateSessionId();
-    BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['session']}`='".TextBase::SQLSafe($sessid)."' WHERE `{$bd_users['login']}`='".TextBase::SQLSafe($login)."'");
+    BD("UPDATE `{$bd_names['users']}` SET `{$bd_users['session']}`='".mcrDB::safe($sessid)."' WHERE `{$bd_users['login']}`='".mcrDB::safe($login)."'");
 
-	vtxtlog("[auth.php] login process [Success] User [$login] Session [$sessid]");			
+	mcrSys::log("[auth.php] login process [Success] User [$login] Session [$sessid]");			
 		
 	exit(sqlConfigGet('latest-game-build').':'.md5($auth_user->name()).':'.$auth_user->name().':'.$sessid.':');
 ?>

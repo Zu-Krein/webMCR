@@ -3,11 +3,11 @@ header('Content-Type: text/html;charset=UTF-8');
 
 require('../system.php');
 
-loadTool('user.class.php'); 
-loadTool('monitoring.class.php');
-loadTool('catalog.class.php');
+mcrSys::loadTool('user.class.php'); 
+mcrSys::loadTool('monitoring.class.php');
+mcrSys::loadTool('catalog.class.php');
 
-BDConnect('news');
+mcrDB::connect('news');
 
 $news = '';
 $page_title = 'Новостная лента';
