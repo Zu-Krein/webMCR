@@ -1,46 +1,59 @@
-<?php header ("Content-type: image/png");
+<?php
+header("Content-type: image/png");
+
 require('./system.php');
 
-function ShowSkinWithBuff() { // auto generate default skin way if not enough params
-global $uInfo, $config; 
+$showMini = (Filter::input('mini', 'get', 'int') or Filter::input('m', 'get', 'bool')) ? true : false;
+$showByName = Filter::input('user_name', 'get', 'string', true);
+$isFemale = Filter::input('female', 'get', 'int', true);   
+$userId = Filter::input('user_id', 'get', 'int');
+if ($showMini and !$userId) $userId = Filter::input('mini', 'get', 'int');
 
-	$skin = GetVisual('skin');
-	if ($skin === false and $uInfo['name'] !== false ) return; // user not exists - all users have default skin in skins dir
-	
-	loadTool('skin.class.php');	
-	$dir = MCRAFT . ( ( $uInfo['female'] == -1 and $uInfo['name'] ) ? 'tmp/skin_buffer/' : 'tmp/skin_buffer/default/' );
-	$buffer = $dir.($uInfo['name'] ? $uInfo['name'] : 'Char').($uInfo['mini'] ? '_Mini' : '').($uInfo['female'] == 1 ? '_female' : '').'.png';
+if ($showByName or $userId or $isFemale !== false) {
 
-		if (file_exists($buffer)) { readfile($buffer); return; }
-	elseif ( $config['sbuffer'] ) 
-	
-		$image = ($uInfo['mini'])? skinGenerator2D::saveHead($buffer, $skin) : skinGenerator2D::savePreview($buffer, $skin, GetVisual('cloak'));
-	else 	
-		$image = (!$uInfo['mini'])? skinGenerator2D::createHead($skin) : skinGenerator2D::createPreview($skin, GetVisual('cloak'));
-
-	if ($image) { imagepng($image); imagedestroy($image); } 
+    if ($userId) {
+        DBinit('skin_viewer');
+        loadTool('user.class.php');
+        $tmp_user = new User($userId);
+        if (!$tmp_user->id()) exit;        
+        $showByName = $tmp_user->name();     
+        
+        if (!file_exists($tmp_user->getSkinFName())) {
+        
+            if ($config['default_skin']) $tmp_user->setDefaultSkin(); 
+            else { 
+                $showByName = false; 
+                $isFemale = 1; 
+            }
+        }
+    } 
+    
+    ShowSkin($showMini, $showByName, $isFemale, $config['sbuffer']);
 }
 
-function GetVisual($type = 'skin') {
-global $site_ways, $uInfo;
-	
-	if ( $uInfo['name'] === false and $type == 'cloak' ) return false; // default cloak not supported
-	$dir = MCRAFT . ( ( $uInfo['female'] == -1 and $uInfo['name'] ) ? $site_ways[$type.'s'] : 'tmp/default_skins/' );
-	$way =  $dir . ($uInfo['name'] ? $uInfo['name'] : 'Char') . ($uInfo['female'] == 1 ? '_female' : '').'.png';
-	return (file_exists($way)) ? $way : false;	
+function ShowSkin($mini = false, $name = false, $isFemale = false, $saveBuffer = false)
+{   
+    global $site_ways;    
+    loadTool('skin.class.php');
+
+    if ($isFemale !== false) {
+    
+        $cloak = false;
+        $skin = MCRAFT . 'tmp/skin_buffer/default/Char' . (($isFemale) ? '_female' : '') . '.png';
+        $buffer = MCRAFT . 'tmp/skin_buffer/default/Char' . ($mini ? '_Mini' : '') . ($isFemale ? '_female' : '') . '.png';
+    } elseif ($name) {
+        $skin = MCRAFT . $site_ways['skins'] . $name . (($isFemale) ? '_female' : '') . '.png';
+        $cloak = MCRAFT . $site_ways['cloaks']  . $name . '.png';
+        $buffer = MCRAFT . 'tmp/skin_buffer/' . $name. ($mini ? '_Mini' : '') . '.png';
+    } else exit;
+        
+    if (file_exists($buffer)) {
+        readfile($buffer);
+        exit;
+    } elseif ($saveBuffer)
+        $image = ($mini) ? SkinViewer2D::saveHead($buffer, $skin) : SkinViewer2D::savePreview($buffer, $skin, $cloak);
+    else
+        $image = ($mini) ? SkinViewer2D::createHead($skin) : SkinViewer2D::createPreview($skin, $cloak);
+
+    if ($image) imagepng($image);
 }
-
-$uInfo = array (	'mini'		=> (isset($_GET['mini']) or isset($_GET['m'])) ? true : false,
-					'female' 	=> !empty($_GET['female']) ? 1 : (isset($_GET['female']) ? 0 : -1),
-					'name' 		=> !empty($_GET['user_name']) ? $_GET['user_name'] : false,
-					'id'		=> (!empty($_GET['user_id']) or !empty($_GET['mini'])) ? (int) (empty($_GET['user_id']) ? $_GET['mini'] : $_GET['user_id']) : false );
-
-if ( $uInfo['id'] ) {
-
-	BDConnect('skin_viewer'); loadTool('user.class.php');	
-	$tmp_user = new User($uInfo['id'], $bd_users['id']) ;
-	if ( !$tmp_user->id() ) exit; 
-
-	$uInfo['name']		= ($tmp_user->defaultSkinTrigger()) ? '' : $tmp_user->name();	
-}
-ShowSkinWithBuff();

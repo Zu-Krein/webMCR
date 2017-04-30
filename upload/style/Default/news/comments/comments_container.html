@@ -2,13 +2,15 @@
 	function cGetName(pl) {
 		
 		var item = GetById('comment-add-text')		
-		if (item == null) return false		
-		    item.innerHTML += '[b]'+pl.innerHTML+'[/b]'
+		if (!item) return false		
+		    item.innerHTML += '[b]' + pl.innerHTML + '[/b]'
 			item.onclick()
 		  
 		return false
 	}
 </script>
+
+<!--<div style="padding: 6px;"><a href="#">Удалить все комментарии</a></div>-->
 
 <div id="comments-main">
 	

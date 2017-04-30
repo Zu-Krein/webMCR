@@ -12,9 +12,13 @@ function CheckLen() {
 
 function DrawLenInfo(e) {
 
-  e = e || window.event;
+  var code = -1
   
-  var code   = e.keyCode?e.keyCode:(e.which?e.which:e.charCode)
+  if (e) {
+  
+  e = e || window.event  
+  code   = e.keyCode ? e.keyCode : (e.which ? e.which : e.charCode)
+  }
   
   var used = CheckLen()
 
@@ -24,7 +28,7 @@ function DrawLenInfo(e) {
   GetById('comment-length').innerHTML = used
 
 	switch (code){
-        case 13:
+        /*case 13:*/
         case 8:
         case 9:
         case 46:
@@ -110,7 +114,7 @@ var smile_holder = GetById('comment-smile-list')
 if ( smile_holder.innerHTML.length ) return false
 
   for (var i=0; i<=smiles.length-1; ++i) 
-     smile_holder.innerHTML += '<a href="#" onclick="return cAddSmile('+ i +')" class="smile"><img src="' + base_url + way_style + '/smiles/'+smiles[i].image+'" alt="Смайлик"/></a>'
+     smile_holder.innerHTML += '<a href="#" onclick="return cAddSmile('+ i +')" class="smile"><img src="' + base_url + way_style + 'img/smiles/' + smiles[i].image + '" alt="Смайлик"/></a>'
 }
 
 function Quote(id) {
@@ -135,13 +139,14 @@ return false
 
 <div class="form-block">
 
-<div class="block-header"><?php echo $postTitle; ?></div>
+<div class="block-header">Добавить комментарий</div>
 
 <div class="block-line"></div>
 
-<form action="index.php?mode=news_full&id=<?php echo $id; ?>" name="adminform" method="post">
+<form method="post">
 
-<input id="comment-item-id" type="hidden" name="id" value="<?php echo $id; ?>" />
+<input id="comment-item-id" type="hidden" name="id" value="<?php echo $id ?>" />
+<input id="comment-item-type" type="hidden" value="<?php echo $type ?>" />
 
 <div class="btn-toolbar">
 	<div class="btn-group">
@@ -168,7 +173,7 @@ return false
  
 <div style="text-align: center;">
  
-     <textarea id="comment-add-text" maxlength="255" class="span11" style="height:100px" name="message" onclick="return DrawLenInfo(event)" onchange="return DrawLenInfo(event)" onkeyup="return DrawLenInfo(event)" onkeypress="return DrawLenInfo(event)" ><?php echo $editMessage; ?></textarea></td>
+     <textarea id="comment-add-text" maxlength="255" class="span11" style="height:100px" name="message" onclick="return DrawLenInfo(event)" onchange="return DrawLenInfo(event)" onkeyup="return DrawLenInfo(event)" onkeypress="return DrawLenInfo(event)" ></textarea>
  
 </div>
 
@@ -179,8 +184,8 @@ return false
   
 	<img id="comment-captcha" src="instruments/captcha/captcha.php?refresh=<?php echo rand(1337,31337) ?>" class="img-polaroid" alt="Код подтверждения" width="70" height="30"/>
 	
-	<input id="antibot" type="text" name="antibot" placeholder="Код:" maxlength="4" class="antibot" style="top: 0px;" />
-	<input id="comment-button" class="btn" type="submit" onclick="PostComment(); return false" value="<?php echo $postButton; ?>" />
+	<input id="antibot" type="text" name="antibot" placeholder="Код:" maxlength="4" class="antibot" style="top: 4px;" />
+	<input id="comment-button" class="btn" type="submit" onclick="PostComment(); return false" value="Добавить" />
   
   </div>
 </form>	

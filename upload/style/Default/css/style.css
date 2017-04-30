@@ -136,7 +136,7 @@ textarea {
   top: 50%;
   left: 50%;
   margin-left: -320px;
-  height: 280px;
+  min-height: 280px;
   width: 640px;
   
   border: 1px solid #868686;
@@ -171,7 +171,7 @@ textarea {
   right: 0;
 }
 
-.female-input { /* O__o */
+.female-input { 
   padding : 6px;
   font-size: 15px; 
 }
@@ -310,7 +310,9 @@ a.news-link:hover{
   font-size: 14px;
   width: 500px;
   
-  /* Перенос длинных слов */
+  /* Перенос длинных слов */ 
+  
+  word-wrap: break-word;
 
   white-space: pre-wrap;
   white-space: -moz-pre-wrap;

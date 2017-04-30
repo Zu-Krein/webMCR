@@ -4,18 +4,10 @@ require('../system.php');
 loadTool('ajax.php');
 loadTool('monitoring.class.php');
 
-if (empty($_POST['id'])) exit;
-$id = (int)$_POST['id'];
+$id = Filter::input('id', 'post', 'int', true) or exit;
 
-$now = false;
+DBinit('monitoring');
 
-if (isset($_POST['now']) and !empty($user) and $user->lvl() >= 15) 
-
-$now = true;
-
-BDConnect('monitoring');
-
-$server = new Server($id);
-$server->UpdateState($now);
+$server = new Server($id, 'serverstate/');
+$server->UpdateState();
 $server->ShowInfo();
-?>
